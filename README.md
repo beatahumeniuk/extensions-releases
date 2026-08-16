@@ -36,6 +36,22 @@ install-extensions.cmd /force           :: zainstaluj także to, co aktualne
 
 Po instalacji przeładuj okno VS Code (**Developer: Reload Window**).
 
+## Instalacja na maszynie z bashem
+
+Na macOS, Linuksie albo Windowsie z Git Bashem to samo robi
+**[`build-and-install.sh`](build-and-install.sh)** — też leży na liście plików
+wyżej i też nie potrzebuje kopii repozytorium:
+
+```bash
+./build-and-install.sh                  # wszystko, co nieaktualne
+./build-and-install.sh api-designer     # tylko wskazane rozszerzenia
+FORCE=1 ./build-and-install.sh          # zainstaluj także to, co aktualne
+```
+
+Potrzebuje `curl` (albo `wget`) i CLI VS Code — nie potrzebuje Node.js ani npm.
+Opisany w jego pomocy tryb `--build` **tutaj nie zadziała**: buduje ze źródeł,
+a w tym repozytorium źródeł nie ma.
+
 ## Instalacja ręczna
 
 Pojedynczą paczkę można pobrać z release'u i zainstalować przez
