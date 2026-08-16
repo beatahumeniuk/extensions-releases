@@ -31,13 +31,27 @@ Artifacts are discovered **by their frontmatter `type:`, scanning `analysis/`** 
 
 | `type:` | Gdzie leży |
 |---|---|
-| `view-analysis` | `analysis/ui/<widok>/<widok>.md` |
-| `api-analysis` | `analysis/api/<ścieżka>/api.md` |
+| `view-analysis` | `analysis/ui/<widok>/<widok>.md` (indeks; sekcje w `sections/*.md` jako `view-analysis-part`) |
+| `api-analysis` | `analysis/api/<ścieżka>/api.md` (indeks; części przepływu w `parts/*.md` jako `api-analysis-part`) |
 | `contract` | `analysis/api/contracts/<nazwa>.md` |
 | `field-mapping` | `analysis/api/<ścieżka>/<cel>.mapping.md` |
 | `value-dictionary` | `analysis/dictionary/<nazwa>.md` |
 | `db-playground-schema` | `analysis/db/model/<źródło>-schema.md` |
 | `confluence-page` | gdzie ustawiono `confluenceToMd.downloadFolder` (np. `analysis/confluence/<slug>.md`); domyślnie strona ląduje tam, gdzie pracował analityk — poza `analysis/` skanowanie jej nie znajdzie |
+
+**An analysis is an index plus its parts, and the artifact is the whole.** The
+file carrying `view-analysis` / `api-analysis` is the index: identity,
+frontmatter, counters and a list of links. The `-part` files it links —
+`sections/*.md` next to a view, `parts/*.md` next to a flow — are that same
+artifact's sections, and they are where the content is. So:
+
+- **count and link the index**, never a part; a part listed as an artifact of
+  its own turns one view analysis into seven rows and seven freshness checks;
+- **read the parts for evidence** — endpoints, actions, open issues and
+  validation findings are in the section files, and an index read alone looks
+  like an empty analysis;
+- a `-part` whose `parent:` resolves to nothing is an **orphan** (its index was
+  deleted or moved): report it, do not promote it.
 
 A file without recognizable frontmatter is listed but never auto-included.
 `docs/` is not scanned: it is the hand-written deliverable, and a handoff is
@@ -60,21 +74,25 @@ assembled from evidence, not from another summary of it.
 
 List every markdown file under `analysis/` with frontmatter `type`, `source`, `generated`, plus every Maven fragment under `analysis/external/<klient>/dependency.xml` (provenance from its XML comment header). Present a table grouped by type. Note files with missing/foreign frontmatter as excluded.
 
+**One row per analysis, not per file.** A `type` ending in `-part` is not an artifact: fold it into its `parent:` and, if it helps the user pick scope, say how many parts the index has (`login.md (6 sekcji)`). Orphan parts get their own line under excluded, with the reason.
+
 ### Step 2 — Select scope (interactive, max 2 questions)
 
 Propose the artifact set for the feature: start from the view(s) matching `$ARGUMENTS` hints or the feature id, then pull in **referenced** artifacts — contracts whose endpoints appear in the views' "Dane"/"Akcje" sections, mappings whose `source:` points at a contract in the set or whose target schema name appears in a contract's `## Model danych`, Confluence pages the user points at, and dependency fragments whose header `feature:` matches the feature id or which a scoped artifact links to. Show the proposed set with a one-line reason per artifact and **Ask the user** to confirm/adjust. If nothing matches the feature id, ask instead of guessing.
+
+The references live in the section files, so follow the index links rather than grepping the index — and follow them rather than guessing file names, because a view's section files are numbered and the numbers shift when a section is added — the index lists titles and links, and nothing else. Scoping an analysis in always scopes in all of its parts; they are not selectable separately.
 
 ### Step 3 — Cross-check (self-review before writing)
 
 Run these checks on the confirmed set; each failure becomes an open question (`Block` per severity) — none of them silently blocks the package except the abort condition:
 
-1. **Endpoint coverage** — every endpoint named in a view analysis has a contract in the set that documents it. Missing → Q with `Block: yes` for endpoints used by actions, `no` for display-only.
+1. **Endpoint coverage** — every endpoint named in a view analysis (`sections/endpoints.md`, and the section files that map onto it) has a contract in the set that documents it. Missing → Q with `Block: yes` for endpoints used by actions, `no` for display-only.
 2. **Mapping linkage** — every mapping's target schema is used by a contract or view in the set; orphan mappings are surfaced (include? drop?).
-3. **Freshness** — for every artifact compare frontmatter `generated:` with the last-modified date of its `source:` (git/filesystem, when resolvable). Source newer → mark `stale` in the `change.md` artifact table and add a "regenerate with <generator>" Q.
-4. **Open issues import** — collect every "Kwestie otwarte" row from view analyses and every `## Braki` entry from mappings; they become `Q-NN` entries verbatim.
+3. **Freshness** — for every artifact compare frontmatter `generated:` with the last-modified date of its `source:` (git/filesystem, when resolvable). Source newer → mark `stale` in the `change.md` artifact table and add a "regenerate with <generator>" Q. **Judge freshness at the index only.** A part is rewritten solely when its own content changed, so an untouched section legitimately carries an older `generated:` than the index — comparing part dates against each other would report a whole shelf of false staleness.
+4. **Open issues import** — collect every "Kwestie otwarte" row from view analyses (`sections/open-questions.md`) **and from flow analyses** (`parts/open-questions.md`), plus every `## Braki` entry from mappings; they become `Q-NN` entries verbatim. Both analyses use the same five statuses, so filter them the same way: `Do uzupełnienia` / `Do ustalenia` / `Czeka na dane` are still open, `Nie dotyczy` / `Rozwiązane` are not and do not become questions.
 5. **Completeness of the set** — a view whose actions call an endpoint with no request/response samples, a contract in the set referenced by nothing — surface, ask.
 6. **Mockup link** — every view in scope carries a `mockup:` frontmatter key. Missing → collect the Figma link in the interview (the mockup always exists); it lands in the `change.md` artifact table, never as an open question.
-
+7. **Parts resolve** — every link in an index points at a file that exists, and every `-part` file in the package is linked by its index. A missing target means the analysis was hand-edited or half-copied; a file nothing links is a leftover a reader would trust by mistake. Either way: Q with `Block: no`, and a "regenerate with <generator>" recommendation — never patch the index by hand.
 **Abort condition:** if more than half the artifacts are `stale` or a view analysis in scope has `status: draft` with 0% coverage, stop before writing and report — a change built on that would hand off noise.
 
 ### Step 4 — Interview (max 3 questions, with Recommends)
@@ -93,11 +111,13 @@ Create `context/changes/<feature-id>/` per `references/handoff-schema.md`, in th
 
 1. **open-questions.md** — all `Q-NN` from Steps 3–4.
 2. **test-spec.md** and **spec.md** — distilled per schema; every claim links (repo-relative) to its artifact in `analysis/`. Nothing is copied — `analysis/` stays the single home of every artifact, including dependency fragments and PNG previews.
+
+   **Link at the depth of the claim.** Referring to the analysis as a whole (the artifact table, "the login view") links the index; citing one thing (a validation finding, a table's columns, a processing step) links the part that holds it — `.../login/sections/section-01.md`, `.../wnioski/parts/step-03-mapowanie.md`. That is what the split bought: a reader lands on the evidence instead of on a table of contents.
 3. **change.md** — last, so its counters (`blockers`, per-artifact freshness) are true. `status: ready` only when `blockers: 0` and nothing is `stale`.
 
 ### Step 6 — Self-review before finishing
 
-Verify, and fix before reporting: every repo-relative link in the change folder resolves inside the repository; every section literal from the schema is present; no `file:line` anchors into implementation code; no invented facts (check every risk row cites an `analysis/` file); `change.md` counters match reality. If a check fails and can't be fixed from the evidence, downgrade to `status: draft` and add a Q — never patch silently with guesses.
+Verify, and fix before reporting: every repo-relative link in the change folder resolves inside the repository — including the ones that point into a `sections/` or `parts/` file, which is exactly where a hand-typed path goes wrong; every section literal from the schema is present; no `file:line` anchors into implementation code; no invented facts (check every risk row cites an `analysis/` file); `change.md` counters match reality (artifact count counts analyses, not their parts). If a check fails and can't be fixed from the evidence, downgrade to `status: draft` and add a Q — never patch silently with guesses.
 
 ### Step 7 — Optional delivery to the developer's repo
 
@@ -108,7 +128,10 @@ of the schema — `spec.md` and `test-spec.md` (links rewritten to relative
 `analysis/...` paths) plus an `analysis/` folder holding copies of every scoped
 artifact from our `analysis/` tree, each stamped with `deliveredFrom:` (feature id + commit sha when the
 scoped artifacts are committed, else the delivery date + a warning in the
-report). Never overwrite the developer's own files (`adr.md`,
+report). **A split analysis is delivered whole and in shape**: the index keeps
+its own folder and its `sections/` (or `parts/`) beside it, because the links
+inside it are relative — flattening the package would deliver an index whose
+every link is broken. Never overwrite the developer's own files (`adr.md`,
 `tech.md`, or any file without `deliveredFrom:` frontmatter). No target
 given → skip this step silently.
 
@@ -122,4 +145,6 @@ Report: change folder path, artifact count, blockers count, freshness summary, t
 - **Artifact without frontmatter** — list as excluded with reason `brak frontmattera`; offer to include manually only if the user insists (then mark `Status: unknown`).
 - **Re-run for an existing feature id** — read the existing change folder first; propose refresh (update links, merge new Qs, keep resolved Qs annotated) instead of blind overwrite. Copy the previous `change.md` to `change-<YYYY-MM-DD>.md` when counters change.
 - **Two changes share an artifact** — both link the same `analysis/` file; that is the point of links over copies.
+- **A single-file analysis (no `sections/` / `parts/`)** — read it as it is. Documents written before the split, hand-written ones adopted with `generator: manual`, and pages fetched back from Confluence all arrive whole; the sections are `## N.` blocks inside one file instead of files. Nothing here requires the split — only the reading path differs.
+- **The user points at a part** (`.../sections/section-01.md` as an artifact hint) — take it as pointing at its `parent:` and say so in one line. The hint is about the view, not about one of its files.
 - **User asks for dev-only or test-only** — write the whole change folder anyway but say which file is theirs; the other audience file costs nothing and keeps the contract stable.

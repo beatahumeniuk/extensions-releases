@@ -27,6 +27,12 @@ context/changes/<feature-id>/
 All links inside these files are repo-relative (`../../analysis/ui/login/login.md`)
 and must resolve within the repository.
 
+An analysis in `analysis/` is an **index plus its parts** — `login.md` with
+`sections/*.md` beside it, `api.md` with `parts/*.md`. Link the index when you
+mean the analysis, link the part when you mean one thing inside it
+(`../../analysis/ui/login/sections/section-01.md`). Both are links into the
+same artifact; only one of them makes the reader scroll.
+
 ## change.md
 
 ```markdown
@@ -63,7 +69,9 @@ blockers: <n>              # open questions with Block: yes
   Jeśli nic nie wykluczono w wywiadzie, wpisz `# TODO: potwierdź zakres
   wykluczeń` i dodaj Open Question.
 - **Artefakty** — tabela: `| Artefakt | Typ | Źródło | Wygenerowano | Status |`.
-  `Artefakt` = repo-relative link do pliku w `analysis/`; `Źródło` i
+  `Artefakt` = repo-relative link do **indeksu** artefaktu w `analysis/`
+  (analiza podzielona na pliki jest **jednym wierszem**, nie sześcioma —
+  części nie mają tu własnych wierszy); `Źródło` i
   `Wygenerowano` przepisane z frontmattera artefaktu; `Status` = `fresh` |
   `stale` (źródło nowsze niż eksport) | `unknown` (brak danych). Fragmenty
   zależności (`analysis/external/<klient>/dependency.xml`) też są wierszami tej tabeli.
@@ -103,8 +111,11 @@ generated: <YYYY-MM-DD>
 ```
 
 IDs `Q-NN`, append-only within a run. Every open issue imported from a view
-analysis (sekcja „Kwestie otwarte"), every `## Braki` entry from a mapping,
-and every cross-check failure lands here. **Never resolved by the skill** —
+analysis (`sections/open-questions.md`), from a
+flow analysis (`parts/open-questions.md`), every `## Braki` entry from a mapping,
+and every cross-check failure lands here. Rozwiązane i „nie dotyczy" nie są
+kwestiami otwartymi i nie trafiają tu wcale. `Źródło` links the file the issue was
+read from — the section, not the index. **Never resolved by the skill** —
 only the user or the source artifacts resolve them.
 
 ## spec.md
@@ -133,7 +144,8 @@ Rules:
   **never** references files or line numbers in the developer's own repo.
 - **Widoki i akcje** — per view: one paragraph of intent + link to the
   analysis in `analysis/ui/` **and the Figma mockup link** (`mockup:` frontmatter);
-  list only the actions with non-obvious flow (error branches, modals).
+  list only the actions with non-obvious flow (error branches, modals), each
+  pointing at the section file where its component is described.
 - **Mapowania pól** — per mapping: target schema, sources, link; call out
   every `transform` and `whenNull` rule as implementation obligations.
 - **Zależności** — table `| Plik | Po co |`, one row per
@@ -163,8 +175,10 @@ generated: <YYYY-MM-DD>
 Rules:
 - **Ryzyka** — table `| Ryzyko | Dowód | Najtańsza warstwa testu |`, ordered
   by leverage. `Dowód` links into `analysis/` (validation finding code, contract
-  constraint, mapping gap). No invented risks: every row cites evidence.
-- **Reguły walidacji per komponent** — distilled from view analyses
+  constraint, mapping gap) — at the section file that carries it, not at the
+  index. No invented risks: every
+  row cites evidence.
+- **Reguły walidacji per komponent** — distilled from the view's section files
   (wymagane, długości, wzorce, zakresy, warunki widoczności) — this is the
   tester's checklist, one table per view.
 - **Przypadki brzegowe z ograniczeń** — derived mechanically from contract
@@ -187,12 +201,19 @@ handoff can additionally be **delivered** there:
   spec.md        # copy of the change's spec.md — a THIN INDEX, never a container
   test-spec.md   # copy of the change's test-spec.md
   analysis/      # the depth: delivered copies of the scoped analysis/ artifacts
-    views/<view>.md
-    flows/<flow>.md
+    views/<view>/<view>.md      # the index…
+    views/<view>/sections/*.md  # …and its sections, beside it
+    flows/<flow>/api.md         # likewise for a flow analysis…
+    flows/<flow>/parts/*.md     # …and its parts
     contracts/<name>.md
     db/<name>-schema.md
     dependencies/<name>.pom.xml
 ```
+
+A split analysis keeps its package folder in the delivery: the links inside an
+index are relative to it (`sections/section-01.md`), so a flattened copy would arrive
+with every link broken. Single-file artifacts (contracts, mappings, schemas,
+dependency fragments) are delivered as the single files they are.
 
 `spec.md` is deliberately small: intent, scope, stan zastany, reading order
 and links — it never inlines tables or rules that live in the artifacts.

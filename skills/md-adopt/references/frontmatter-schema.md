@@ -17,8 +17,10 @@ trwała, i nie może zginąć pod przebiegiem narzędzia.
 
 ```
 analysis/
-  ui/<widok>/<widok>.md         # type: view-analysis   (UI Analysis)
-  api/<ścieżka>/api.md          # type: api-analysis    (Logic Analysis)
+  ui/<widok>/<widok>.md         # type: view-analysis   (UI Analysis) — indeks
+  ui/<widok>/sections/*.md      # type: view-analysis-part — sekcje analizy
+  api/<ścieżka>/api.md          # type: api-analysis    (Logic Analysis) — indeks
+  api/<ścieżka>/parts/*.md      # type: api-analysis-part — części przepływu
   api/contracts/<nazwa>.md      # type: contract        (API Designer)
   api/<ścieżka>/<cel>.mapping.md # type: field-mapping  (Schema Mapper)
   db/model/<źródło>-schema.md   # type: db-playground-schema (DB Playground)
@@ -41,7 +43,7 @@ Order is fixed; omit a key rather than write an empty value.
 
 | Key | Required | Values / format | Notes |
 |---|---|---|---|
-| `type` | yes | `contract` · `field-mapping` · `view-analysis` · `api-analysis` · `db-playground-schema` · `confluence-page` | what the document is |
+| `type` | yes | `contract` · `field-mapping` · `view-analysis` · `api-analysis` · `db-playground-schema` · `confluence-page` · `<artefakt>-part` | what the document is; `-part` = jedna część analizy podzielonej na pliki |
 | `generator` | yes | `<tool>@<version>` or `manual` | `manual` = written by a person, editable |
 | `generated` | when known | `YYYY-MM-DD` | when the CONTENT was produced; never guessed |
 | `adopted` | adoption only | `YYYY-MM-DD` | when `/md-adopt` brought the file into the format and `generated` is unknown |
@@ -52,6 +54,8 @@ Order is fixed; omit a key rather than write an empty value.
 | `space` | confluence only | space key | |
 | `status` | per type | `draft` · `complete` | computed by generators; set by hand for manual docs |
 | `components` / `openIssues` / `coverage` | view-analysis only | numbers | counters computed at export |
+| `part` | `-part` only | nazwa części (`section-01`, `endpoints`, `open-questions`, `step-01`…) | która to część analizy |
+| `parent` | `-part` only | ścieżka względna do indeksu | plik, którego spis treści linkuje tę część |
 | `managed` | tool exports only | `true` | fully regenerated from `source` — **never hand-edited**; a hand-written file must NOT carry it |
 
 The `managed: true` / `generator: manual` distinction is load-bearing:
@@ -68,16 +72,24 @@ H1 is always the document title.
 - **view-analysis** — numbered `## N. <sekcja>`; nazwy sekcji zależą od
   ustawień zespołu, więc rozpoznawaj po kształcie: sekcja struktury to ta,
   w której są wiersze komponentów ``- **Etykieta** (`Typ`) — reguły``,
-  a `### <sekcja> _(typ)_` otwiera sekcję w jej obrębie. Numeracja jest
-  dynamiczna — sekcja bez treści nie pojawia się wcale, więc numery nie są
-  stałe.
+  a nagłówek z typem w nawiasie — `## 1. Dane klienta  _(Sekcja)_` w pliku
+  sekcji, `### Dane klienta  _(Sekcja)_` w dokumencie jednoplikowym — otwiera
+  sekcję. Numeracja jest dynamiczna, więc numery nie są stałe.
+  **Dokument jest podzielony na pliki** (patrz „Split documents"): jeden plik
+  na sekcję widoku, więc wierszy komponentów szukaj w `sections/`, nie
+  w indeksie — indeks ich nie ma.
 - **api-analysis** — export of the Logic Analysis extension (flow analysis of
   a process/service): H1 `# API: <nazwa>`, numbered step sections
   (walidacja, odczyt/zapis bazy, mapowanie, wywołanie usługi zewnętrznej,
-  przekształcenie, event Kafka), response sections per HTTP status, closing
-  „Biblioteki klientów". Source of truth: `analysis/api/<ścieżka>/api.json`.
+  przekształcenie, event Kafka) and response sections per HTTP status. Source
+  of truth: `analysis/api/<ścieżka>/api.json`.
   Documents written before the rename carry `type: process-flow-analysis`
   and H1 `# Analiza flow: <nazwa>`; both are still recognised on read.
+  **Dokument jest podzielony na pliki** (patrz „Split documents"): pod
+  `## Przebieg` diagram i spis tego, co się kiedy dzieje, a treść kroków,
+  odpowiedzi i kwestii otwartych w `parts/`. Sekcja „Kwestie
+  otwarte" to tabela `| Czego dotyczy | Krok | Status | Komentarz |` z tym
+  samym zestawem statusów co w analizie widoku.
 - **db-playground-schema** — export of DB Playground: summary table, one section per
   table/collection (columns with types, constraints, indexes), relations
   table + Mermaid ER diagram for SQL sources. Extra frontmatter:
@@ -89,6 +101,65 @@ H1 is always the document title.
 
 A document does not need every section — but a section it does have must use
 the canonical name, or importers and `/handoff-package` will not see it.
+
+## Split documents (index + parts)
+
+`view-analysis` and `api-analysis` are written as **an index plus one file per
+part**. The other types are single files.
+
+**The index** carries the artifact's frontmatter (`type`, `generator`,
+`generated`, `source`, counters, `managed`), the H1, and a list of links — no
+content of its own:
+
+| Typ | Katalog | Kształt spisu |
+|---|---|---|
+| `view-analysis` | `sections/` | `N. [tytuł](sections/plik.md)` pod nagłówkiem spisu treści, N = pozycja w spisie |
+| `api-analysis` | `parts/` | `- [tytuł](parts/plik.md)` pod `## Przebieg`, po diagramie Mermaid |
+
+**A part** is one block of the document — its own `## ` heading included —
+under a short frontmatter. For a view that block is **one section of the view**,
+carrying its components together with their mappings, actions, columns and
+validation findings; only the endpoint catalogue and the open questions cut
+across sections and stay separate.
+
+```yaml
+type: view-analysis-part   # albo api-analysis-part
+part: section-01           # widok: section-NN, albo endpoints · open-questions
+                           # przepływ: request · step-01 · step-02 · … ·
+                           #           responses · open-questions
+parent: ../login.md        # albo ../api.md
+generator: ui-analysis@0.14.0
+generated: 2026-08-16
+managed: true              # tylko gdy indeks też jest managed
+```
+
+**File names.** A view analysis has **one file per section of the view**,
+numbered (`section-01.md`) rather than named after it — without a heading in
+the mockup a section's name is built out of its first few labels, so adding one
+field would rename the file. Each carries that section's components together
+with their mappings, actions, columns and validation findings — a part is a
+subject, not an aspect. Two files are not sections and have fixed names:
+`endpoints.md` (the catalogue of operations the view calls, cross-cutting
+because one endpoint serves several sections) and `open-questions.md` (one
+list, with each component name linking into the section that describes it).
+Deliberately without an ordinal in the name, so a section that empties out does
+not rename the ones that stay. A flow's parts are `request.md`,
+`step-NN-<type>.md` — the ordinal because order is the content there, the step
+type because file names are English everywhere in the tree and a step's title
+is written in the analyst's own language — `responses.md` and
+`open-questions.md`, which comes last, after everything the analysis does know.
+Client libraries are not a part: the pom fragment lives in
+`analysis/external/<klient>/dependency.xml` and the step that calls the service
+links to it.
+
+**Regeneration.** Parts are written together with the index: a section with
+nothing to report gets no file, and a file the index no longer links is
+deleted. So a part legitimately carries an older `generated:` than its index —
+it means the section did not change, not that it is stale.
+
+Reading rules for every consumer: **count and link the index, read the parts**.
+A single-file document (hand-written, an older export, a page fetched back from
+Confluence) is equally valid — it simply has no links to follow.
 
 ## Dependency fragments (`analysis/external/<klient>/dependency.xml`)
 
@@ -102,8 +173,9 @@ pasted into `pom.xml`:
 - Provenance goes in an XML comment header, since XML has no frontmatter:
   `<!-- feature: <id> · added: YYYY-MM-DD · why: <one line> -->`.
 - A markdown document that needs to mention dependencies links to the file
-  (`[Zależności](../dependencies/<name>.pom.xml)`) instead of quoting it —
-  and often no link is needed at all, because `/handoff-package` collects
+  (`[Zależności](../../external/<klient>/dependency.xml)`) instead of quoting
+  it — and often no link is needed at all, because `/handoff-package` collects
   the fragments into the package on its own.
-- File naming follows the artifact it supports (feature id, contract name);
-  the name is given by the author, never generated.
+- The folder is the client the libraries belong to (`external/crm-client/`),
+  named by the author, never generated; the file inside is always
+  `dependency.xml`, so a link to it is predictable from the client name alone.

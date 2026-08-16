@@ -33,7 +33,7 @@ JOBS="${JOBS:-$(default_jobs)}"
 # z samymi paczkami — zrodla moga byc prywatne, a pobieranie i tak idzie zwyklym
 # HTTPS, bez tokena i bez logowania.
 REPO="${REPO:-beatahumeniuk/extensions-releases}"
-TAG="${TAG:-latest-build}"
+BRANCH="${BRANCH:-main}"
 
 usage() {
   cat <<'EOF'
@@ -55,7 +55,7 @@ Zmienne srodowiskowe:
   SKIP_INSTALL=1  zbuduj, ale nie instaluj w edytorze (tylko --build)
   JOBS=n          ile rozszerzen budowac naraz (tylko --build)
   EDITOR_CLI=...  sciezka do CLI VS Code, gdy autowykrywanie zawiedzie
-  REPO=, TAG=     skad pobierac gotowe paczki
+  REPO=, BRANCH=  skad pobierac gotowe paczki
   LOCAL_DIR=...   katalog z paczkami .vsix (tylko --local)
 EOF
 }
@@ -118,11 +118,11 @@ fetch_to_file() {
 }
 
 download_and_install() {
-  local base="${BASE_URL:-https://github.com/$REPO/releases/download/$TAG}"
+  local base="${BASE_URL:-https://raw.githubusercontent.com/$REPO/$BRANCH}"
   local manifest installed tmp rc=0
   local name id ver asset have
 
-  echo "Pobieram listę wersji z release'u '$TAG'..."
+  echo "Pobieram listę wersji z $REPO..."
   # Sieci moze nie byc albo moze byc za firmowym proxy, ktorego curl nie
   # przejdzie. To nie powod, zeby konczyc z niczym: jesli paczki sa juz na
   # dysku, instalujemy je. Zaden skrypt i tak nie zmusi tej sieci do dzialania.
@@ -133,7 +133,7 @@ download_and_install() {
     install_local "$@"
     return $?
   }
-  [[ -n "$manifest" ]] || { echo "✗ Release '$TAG' nie zawiera żadnych paczek." >&2; return 1; }
+  [[ -n "$manifest" ]] || { echo "✗ $REPO nie zawiera żadnych paczek." >&2; return 1; }
 
   installed=""
   if [[ "${FORCE:-0}" != "1" ]]; then

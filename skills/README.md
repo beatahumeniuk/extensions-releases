@@ -19,7 +19,7 @@ Jedno kryterium rozstrzyga, gdzie mieszka funkcja:
 ma zamknięty format wejścia, jedną poprawną odpowiedź i test golden:
 edycja modelu w GUI, rendering modelu → md, parsing **własnego** md → model
 (round-trip), transport Confluence (fetch/publish/sync), zapis w ustalone
-ścieżki `docs/`, strukturalna detekcja **własnych** formatów (zamknięta
+ścieżki `analysis/`, strukturalna detekcja **własnych** formatów (zamknięta
 lista literałów; wszystko inne uczciwie dostaje `confluence-page`).
 
 **Skill agenta** robi wszystko, co wymaga **osądu i rozumienia treści** —
@@ -32,22 +32,58 @@ Reguła na przyszłość: jeśli nowa funkcja potrzebuje rozumienia treści,
 pytania do człowieka albo obsługi „to zależy" — to skill (albo wcale),
 nigdy rozszerzenie.
 
-## Instalacja (raz, na swojej maszynie)
+## Gdzie który skill mieszka
 
-Skopiuj foldery skilli do **`~/.agents/skills/`** — osobistej lokalizacji
-standardu, czytanej m.in. przez GitHub Copilota, Cursora i Codexa we
-wszystkich projektach:
+Skill, który pisze **format jednego rozszerzenia**, mieszka w tym rozszerzeniu
+i jedzie w jego `.vsix` — jedna wersja dla czytnika i dla piszącego, pilnowana
+tą samą regułą podbijania wersji co reszta rozszerzenia:
+
+| Skill | Katalog | Instalacja |
+|---|---|---|
+| `flow-from-code` | `logic-analysis/skill/` | komenda **Logic Analysis: Zainstaluj skill dla agenta** |
+| `view-from-code` | `ui-analysis/vscode-extension/skill/` | komenda **UI Analysis: Zainstaluj skill dla agenta** |
+| `handoff-package` | tutaj | ręcznie, patrz niżej |
+| `md-adopt` | tutaj | ręcznie, patrz niżej |
+
+Tutaj zostają skille **poprzeczne**: `handoff-package` czyta analizy ze
+wszystkich rozszerzeń naraz, `md-adopt` normalizuje całe drzewo `analysis/` —
+żadnego z nich nie da się przypisać do jednego rozszerzenia.
+
+Rozszerzenia zapisują skill tam, gdzie wskazuje **`agentSkills.target`** —
+jedno ustawienie wspólne dla wszystkich rozszerzeń, więc harness wybierasz raz:
+
+| Wartość | Katalog |
+|---|---|
+| `agents` (domyślne) | `~/.agents/skills` — lokalizacja standardu, czytana też przez Cursora i Copilota |
+| `claude-code` | `~/.claude/skills` |
+| `cursor` | `~/.cursor/skills` |
+| `copilot` | `~/.copilot/skills` |
+| `workspace` | `.agents/skills` w projekcie — jedzie z repozytorium, dla zespołu |
+| `workspace-github` | `.github/skills` w projekcie |
+| `custom` | ścieżka z `agentSkills.path` |
+
+Wybierasz **katalog, nie format**: `SKILL.md` idzie bajt w bajt, bez konwersji
+na format harnessu. Domyślne `~/.agents/skills` obsługuje trzy harnessy naraz,
+więc osobna pozycja przydaje się tylko wtedy, gdy chcesz mieć kopię dokładnie
+tam, gdzie dane narzędzie szuka w pierwszej kolejności.
+
+## Instalacja skilli poprzecznych (raz, na swojej maszynie)
+
+Skopiuj foldery do **`~/.agents/skills/`** — osobistej lokalizacji standardu,
+czytanej m.in. przez GitHub Copilota, Cursora i Codexa we wszystkich projektach:
 
 ```bash
 mkdir -p ~/.agents/skills && cp -R handoff-package md-adopt ~/.agents/skills/
 ```
 
-Windows (PowerShell):
+Windows, w wierszu poleceń (`cmd`) — bez PowerShella, jak wszędzie w tym repo:
 
-```powershell
-New-Item -ItemType Directory -Force "$HOME\.agents\skills" | Out-Null
-Copy-Item -Recurse -Force handoff-package,md-adopt "$HOME\.agents\skills\"
+```bat
+md "%USERPROFILE%\.agents\skills" 2>nul
+for %d in (handoff-package md-adopt) do xcopy /E /I /Y "%d" "%USERPROFILE%\.agents\skills\%d"
 ```
+
+W pliku `.bat` podwój znak procenta w pętli (`%%d`).
 
 Aktualizacja = `git pull` + ponowne skopiowanie (albo trzymaj sklonowane repo
 i podlinkuj foldery symlinkiem zamiast kopiować).
@@ -65,30 +101,53 @@ Uwagi per harness:
 
 ## Dostępne skille
 
-- **handoff-package** — składa z `docs/` projektu commitowany folder zmiany
-  `context/changes/<feature-id>/` (nazewnictwo 10x: `change.md`, `spec.md`,
-  `test-spec.md`, `open-questions.md`) dla programisty i testera — z linkami
-  do artefaktów w `docs/`, bez kopii. Inventory-first: wejście w dowolnym
-  punkcie procesu.
-- **md-adopt** — dostosowuje istniejące pliki md do formatu `docs/`
-  (frontmatter, lokalizacja, kanoniczne sekcje). Kontrakt formatu:
+Dwa pierwsze mieszkają w swoich rozszerzeniach (patrz tabela wyżej), dwa
+kolejne — tutaj.
+
+- **flow-from-code** (`logic-analysis/skill/`) — z kodu endpointu buduje szkic
+  pakietu Logic Analysis (`analysis/api/<endpoint>/api.json` + `endpoint.json`
+  i przykłady: kroki w kolejności wykonania, integracje z bibliotekami
+  klienckimi, odpowiedzi per status HTTP, kwestie otwarte z dowodami
+  `plik:linia`).
+- **view-from-code** (`ui-analysis/vscode-extension/skill/`) — z kodu
+  zaimplementowanego widoku wypełnia `analysis/ui/<widok>/view-mapping.json`
+  (typy komponentów, reguły walidacji, warunki widoczności, test id,
+  endpointy, kwestie otwarte z dowodami `plik:linia`). Widoku nigdy
+  nieprzeniesionego z Figmy zakłada od zera — `view.json` pisze wtedy
+  `scripts/seed-view.ts`, nie skill. Test ID bierze w kolejności: kod →
+  analiza → dopiero reguła, a istniejącego nie rusza; rozjazd między kodem
+  a analizą zapisuje jako konflikt (`GEN-003`) i zostawia do rozstrzygnięcia
+  analitykowi.
+- **handoff-package** — składa z materiału w `analysis/` commitowany folder
+  zmiany `context/changes/<feature-id>/` (nazewnictwo 10x: `change.md`,
+  `spec.md`, `test-spec.md`, `open-questions.md`) dla programisty i testera —
+  z linkami do artefaktów w `analysis/`, bez kopii. Inventory-first: wejście
+  w dowolnym punkcie procesu.
+- **md-adopt** — wciąga istniejące pliki md do drzewa `analysis/`
+  (frontmatter, lokalizacja, kanoniczne sekcje, opcjonalny podział na indeks
+  i części). Kontrakt formatu:
   [md-adopt/references/frontmatter-schema.md](md-adopt/references/frontmatter-schema.md).
-- **view-from-code** — z kodu zaimplementowanego widoku buduje szkic pakietu
-  UI Analysis (`views/<widok>/view.json` + `view-mapping.json`:
-  sekcje, typy komponentów, reguły walidacji, endpointy, kwestie otwarte
-  z dowodami `plik:linia`).
-- **flow-from-code** — z kodu endpointu buduje szkic pakietu Logic Analysis
-  (`analysis/api/<endpoint>/api.json` + `request.json`/`response.json`: kroki
-  w kolejności wykonania, integracje z bibliotekami klienckimi, odpowiedzi
-  per status HTTP).
 
 Zasada wspólna skilli `*-from-code`: emitują **natywny pakiet roboczy
 narzędzia** (to, co rozszerzenie otwiera wprost), nigdy markdown — kanoniczny
-md w `docs/` powstaje zawsze jednym eksportem z narzędzia, po weryfikacji
-analityka. Dzięki temu nigdy nie istnieją dwa konkurencyjne renderingi tej
-samej analizy.
+md powstaje zawsze jednym eksportem z narzędzia, po weryfikacji analityka.
+Dzięki temu nigdy nie istnieją dwa konkurencyjne renderingi tej samej analizy.
+
+**Analiza jest podzielona na pliki.** Eksport daje indeks (`<widok>.md`,
+`api.md`) i obok niego części — sekcje widoku w `sections/`, kroki przepływu
+w `parts/` — każda z `type: <artefakt>-part`, `part:` i `parent:`. Skille liczą
+i linkują **indeks**, a czytają **części**: analiza policzona po plikach to
+sześć artefaktów zamiast jednego. Dokument jednoplikowy (pisany ręcznie,
+starszy eksport, strona wrócona z Confluence) jest równie poprawny i czyta się
+go wprost.
+
+W Logic Analysis **`parts/` to wyłącznie kroki procesu**. Kontrakt wejścia
+i wyjścia oraz kwestie otwarte krokami nie są, więc leżą obok indeksu
+(`request.md`, `responses.md`, `open-questions.md`) i dodatkowo są wydrukowane
+w `api.md` — indeks czyta się od góry do dołu i widać z niego wszystko poza
+szczegółami kroków.
 
 Skille zakładają format dokumentacji generowany przez rozszerzenia VS Code
 z repo `extensions` (API Designer, Schema Mapper, UI Analysis,
-Logic Analysis, DB Playground, Confluence to md) — ale działają na każdym `docs/` zgodnym
-z kontraktem frontmattera.
+Logic Analysis, DB Playground, Confluence to md) — ale działają na każdym
+drzewie `analysis/` zgodnym z kontraktem frontmattera.
