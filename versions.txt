@@ -5,4 +5,4 @@ jira-tasks|beatahumeniuk.jira-tasks|0.1.0|jira-tasks.vsix
 logic-analysis|beatahumeniuk.logic-analysis|0.8.1|logic-analysis.vsix
 openapi-tools|beatahumeniuk.openapi-tools|0.8.0|openapi-tools.vsix
 schema-mapper|beatahumeniuk.schema-mapper|0.4.0|schema-mapper.vsix
-ui-analysis|beatahumeniuk.ui-analysis|0.17.1|ui-analysis.vsix
+ui-analysis|beatahumeniuk.ui-analysis|0.18.0|ui-analysis.vsix
