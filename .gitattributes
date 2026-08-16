@@ -1,3 +1,7 @@
-# Skrypt powloki musi miec LF nawet po checkoucie na Windowsie, inaczej bash
-# przewraca sie na "\r: command not found".
+# Skrypt powloki musi miec LF nawet po checkoucie na Windowsie, inaczej
+# bash przewraca sie na "\r: command not found".
 *.sh text eol=lf
+
+# Paczki i archiwum to binaria - git ma ich nie tykac.
+*.vsix binary
+*.zip binary
