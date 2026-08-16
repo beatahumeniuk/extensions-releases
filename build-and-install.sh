@@ -37,10 +37,13 @@ TAG="${TAG:-latest-build}"
 
 usage() {
   cat <<'EOF'
-build-and-install.sh [--build] [nazwa ...]
+build-and-install.sh [--build|--local] [nazwa ...]
 
-Bez --build: pobiera gotowe paczki .vsix zbudowane przez CI z ostatniego
+Bez opcji: pobiera gotowe paczki .vsix zbudowane przez CI z ostatniego
 merge do main i instaluje je w VS Code. Nie wymaga Node.js ani npm.
+
+Z --local: nic nie pobiera. Instaluje paczki .vsix lezace w tym samym
+katalogu co skrypt (albo w LOCAL_DIR). Dla maszyny bez dostepu do sieci.
 
 Z --build: buduje rozszerzenia lokalnie z zrodel w tym katalogu, a potem
 instaluje. Do pracy nad kodem rozszerzenia.
@@ -53,6 +56,7 @@ Zmienne srodowiskowe:
   JOBS=n          ile rozszerzen budowac naraz (tylko --build)
   EDITOR_CLI=...  sciezka do CLI VS Code, gdy autowykrywanie zawiedzie
   REPO=, TAG=     skad pobierac gotowe paczki
+  LOCAL_DIR=...   katalog z paczkami .vsix (tylko --local)
 EOF
 }
 
@@ -62,6 +66,7 @@ for arg in "$@"; do
   case "$arg" in
     --build)      MODE=build ;;
     --download)   MODE=download ;;
+    --local)      MODE=local ;;
     -h|--help)    usage; exit 0 ;;
     -*)           echo "Nieznana opcja: $arg" >&2; usage >&2; exit 2 ;;
     *)            ARGS+=("$arg") ;;
@@ -180,6 +185,62 @@ Przeładuj okno VS Code (Ctrl+Shift+P → Developer: Reload Window)."
   [[ ${#FAILD[@]} -eq 0 ]] || rc=1
   return $rc
 }
+
+# ── Tryb offline: instalacja paczek lezacych obok skryptu ───────────────────
+# Maszyna moze nie miec wyjscia na siec albo nie miec prawa z niego korzystac
+# (firmowe proxy z plikiem PAC, ktorego curl nie obsluguje). Wtedy paczki
+# przynosi cos innego — najczesciej przegladarka, ktora to proxy zna sama —
+# a skrypt tylko instaluje to, co zastal w swoim katalogu. Zero sieci.
+
+install_local() {
+  local dir="${LOCAL_DIR:-$ROOT}"
+  local rc=0 vsix name wanted a
+  local OKL=() FAILL=()
+
+  echo "Instaluję paczki .vsix z katalogu:"
+  echo "  $dir"
+  echo ""
+
+  for vsix in "$dir"/*.vsix; do
+    [[ -f "$vsix" ]] || continue
+    name="$(basename "$vsix" .vsix)"
+
+    # Nazwy podane w argumentach zawezaja liste, tak samo jak w pozostalych trybach.
+    if [[ $# -gt 0 ]]; then
+      wanted=0
+      for a in "$@"; do [[ "$a" == "$name" ]] && wanted=1; done
+      (( wanted )) || continue
+    fi
+
+    echo "▶ $name"
+    if "$EDITOR_CLI" --install-extension "$vsix" --force; then
+      OKL+=("$name")
+    else
+      FAILL+=("$name")
+    fi
+  done
+
+  if [[ ${#OKL[@]} -eq 0 && ${#FAILL[@]} -eq 0 ]]; then
+    echo "✗ Nie znalazłem żadnego pliku .vsix w $dir" >&2
+    echo "  Rozpakuj paczkę do końca — skrypt musi leżeć razem z .vsix-ami," >&2
+    echo "  albo wskaż katalog: LOCAL_DIR=/sciezka ./build-and-install.sh --local" >&2
+    return 1
+  fi
+
+  echo ""
+  echo "══════════════ PODSUMOWANIE ══════════════"
+  for line in "${OKL[@]:-}";   do [[ -n "$line" ]] && echo "  ✓ $line"; done
+  for line in "${FAILL[@]:-}"; do [[ -n "$line" ]] && echo "  ✗ $line"; done
+  [[ ${#OKL[@]} -eq 0 ]] || echo "
+Przeładuj okno VS Code (Ctrl+Shift+P → Developer: Reload Window)."
+  [[ ${#FAILL[@]} -eq 0 ]] || rc=1
+  return $rc
+}
+
+if [[ "$MODE" == "local" ]]; then
+  install_local "$@"
+  exit $?
+fi
 
 if [[ "$MODE" == "download" ]]; then
   download_and_install "$@"
