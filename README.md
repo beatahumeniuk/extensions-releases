@@ -1,9 +1,10 @@
 # Rozszerzenia VS Code — gotowe paczki
 
-To repozytorium nie zawiera kodu. Są tu wyłącznie **gotowe paczki `.vsix`**,
-doczepiane automatycznie do release'u
-[`latest-build`](../../releases/tag/latest-build) po każdej zmianie w źródłach.
-Źródła są w osobnym, prywatnym repozytorium.
+To repozytorium nie zawiera kodu. Są tu wyłącznie **gotowe paczki `.vsix`** —
+widoczne wprost na liście plików wyżej i odświeżane po każdej zmianie
+w źródłach. Te same pliki wiszą przy release'ie
+[`latest-build`](../../releases/tag/latest-build); to kopie, nie dwa różne
+zestawy. Źródła są w osobnym, prywatnym repozytorium.
 
 Repozytorium jest publiczne, więc pobieranie idzie zwykłym HTTPS — bez tokena
 i bez logowania.
