@@ -12,10 +12,14 @@ i bez logowania.
 
 Na maszynie, która ma tylko Windows i VS Code:
 
-1. Pobierz z release'u
-   [`install-extensions.cmd`](../../releases/download/latest-build/install-extensions.cmd)
-   — jeden plik, w dowolny folder.
+1. Pobierz **[`install-extensions.cmd`](install-extensions.cmd)** — leży wyżej,
+   na liście plików tego repozytorium. Kliknij go, potem przycisk pobierania
+   (albo *Raw*), i zapisz gdziekolwiek. Kopia repozytorium nie jest potrzebna.
 2. Uruchom go (dwuklik albo z wiersza poleceń).
+
+Ten sam plik jest doczepiony do
+[release'u](../../releases/download/latest-build/install-extensions.cmd) —
+obie kopie trzyma w zgodzie ten sam build, więc obojętne, skąd go weźmiesz.
 
 To zwykły plik wsadowy: **bez PowerShella**, bez basha, bez interpretera do
 doinstalowania. Wywołuje wyłącznie `curl.exe` (część Windowsa od wersji 1803)

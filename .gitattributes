@@ -1,0 +1,2 @@
+# Instalator musi miec koncowki CRLF - cmd.exe gubi sie na samym LF.
+*.cmd text eol=crlf
