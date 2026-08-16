@@ -123,9 +123,15 @@ download_and_install() {
   local name id ver asset have
 
   echo "Pobieram listę wersji z release'u '$TAG'..."
+  # Sieci moze nie byc albo moze byc za firmowym proxy, ktorego curl nie
+  # przejdzie. To nie powod, zeby konczyc z niczym: jesli paczki sa juz na
+  # dysku, instalujemy je. Zaden skrypt i tak nie zmusi tej sieci do dzialania.
   manifest="$(fetch_to_stdout "$base/versions.txt")" || {
     echo "✗ Nie udało się pobrać $base/versions.txt" >&2
-    return 1
+    echo "  Szukam paczek na dysku..." >&2
+    echo "" >&2
+    install_local "$@"
+    return $?
   }
   [[ -n "$manifest" ]] || { echo "✗ Release '$TAG' nie zawiera żadnych paczek." >&2; return 1; }
 
@@ -192,10 +198,37 @@ Przeładuj okno VS Code (Ctrl+Shift+P → Developer: Reload Window)."
 # przynosi cos innego — najczesciej przegladarka, ktora to proxy zna sama —
 # a skrypt tylko instaluje to, co zastal w swoim katalogu. Zero sieci.
 
+# Gdzie leza paczki. Kolejnosc od najbardziej jednoznacznej do najbardziej
+# prawdopodobnej: wskazany katalog, katalog skryptu, katalog biezacy, a na
+# koncu Pobrane — razem z podkatalogiem, ktory Windows tworzy przy rozpakowaniu
+# archiwum. Chodzi o to, zeby "uruchomilam nie z tego folderu" przestalo byc
+# powodem, dla ktorego nic sie nie instaluje.
+find_local_dir() {
+  local d dl
+  for dl in "${USERPROFILE:-}/Downloads" "$HOME/Downloads"; do
+    [[ -d "$dl" ]] && break
+  done
+  for d in "${LOCAL_DIR:-}" "$ROOT" "$PWD" "$dl" "$dl"/*/; do
+    [[ -n "$d" && -d "$d" ]] || continue
+    if ls "$d"/*.vsix >/dev/null 2>&1; then
+      echo "${d%/}"
+      return 0
+    fi
+  done
+  return 1
+}
+
 install_local() {
-  local dir="${LOCAL_DIR:-$ROOT}"
-  local rc=0 vsix name wanted a
+  local dir rc=0 vsix name wanted a
   local OKL=() FAILL=()
+
+  dir="$(find_local_dir)" || {
+    echo "✗ Nie znalazłem żadnego pliku .vsix." >&2
+    echo "  Szukałem w: katalogu tego skryptu, katalogu bieżącym i w Pobranych" >&2
+    echo "  (także w folderze rozpakowanego archiwum)." >&2
+    echo "  Wskaż katalog wprost: LOCAL_DIR=/sciezka bash build-and-install.sh --local" >&2
+    return 1
+  }
 
   echo "Instaluję paczki .vsix z katalogu:"
   echo "  $dir"
@@ -221,9 +254,7 @@ install_local() {
   done
 
   if [[ ${#OKL[@]} -eq 0 && ${#FAILL[@]} -eq 0 ]]; then
-    echo "✗ Nie znalazłem żadnego pliku .vsix w $dir" >&2
-    echo "  Rozpakuj paczkę do końca — skrypt musi leżeć razem z .vsix-ami," >&2
-    echo "  albo wskaż katalog: LOCAL_DIR=/sciezka ./build-and-install.sh --local" >&2
+    echo "✗ W $dir są paczki, ale żadna nie pasuje do podanych nazw." >&2
     return 1
   fi
 
