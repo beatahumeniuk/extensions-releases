@@ -1,6 +1,3 @@
-# Instalator musi miec koncowki CRLF - cmd.exe gubi sie na samym LF.
-*.cmd text eol=crlf
-
 # Skrypt powloki musi miec LF nawet po checkoucie na Windowsie, inaczej bash
 # przewraca sie na "\r: command not found".
 *.sh text eol=lf
