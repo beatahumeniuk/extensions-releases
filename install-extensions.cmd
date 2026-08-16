@@ -43,53 +43,6 @@ echo Pobieram wylacznie stad, anonimowo, bez logowania:
 echo   %BASE%
 echo.
 
-REM ---- proxy -----------------------------------------------------------------
-REM curl.exe nie czyta ustawien proxy z Windowsa, a przegladarka tak. W sieci
-REM firmowej daje to mylacy obraz: ta sama strona otwiera sie w Chrome, a curl
-REM konczy na "Failed to connect to github.com:443". Adres proxy jest w
-REM rejestrze, wiec bierzemy go stamtad i podajemy curlowi zmienna srodowiskowa.
-REM Wlasne HTTPS_PROXY ma pierwszenstwo - jesli je ustawilas, nie ruszamy.
-if defined HTTPS_PROXY goto proxydone
-
-set "PROXYON="
-set "PROXYSRV="
-set "PROXYPAC="
-set "IEKEY=HKCU\Software\Microsoft\Windows\CurrentVersion\Internet Settings"
-for /f "tokens=3" %%v in ('reg query "%IEKEY%" /v ProxyEnable 2^>nul ^| findstr /i "ProxyEnable"') do set "PROXYON=%%v"
-for /f "tokens=2,*" %%a in ('reg query "%IEKEY%" /v ProxyServer 2^>nul ^| findstr /i "ProxyServer"') do set "PROXYSRV=%%b"
-for /f "tokens=2,*" %%a in ('reg query "%IEKEY%" /v AutoConfigURL 2^>nul ^| findstr /i "AutoConfigURL"') do set "PROXYPAC=%%b"
-
-if "%PROXYON%"=="0x0" set "PROXYSRV="
-if not defined PROXYSRV goto proxypac
-
-REM Wartosc bywa rozpisana na protokoly ("http=a:80;https=b:80"). Rozbierania
-REM tego nie zgaduje - lepiej powiedziec, co znalazlem, niz podac curlowi
-REM sklejke, ktora i tak nie zadziala.
-echo %PROXYSRV% | find "=" >nul
-if not errorlevel 1 (
-  echo UWAGA: proxy jest rozpisane na protokoly: %PROXYSRV%
-  echo        Ustaw recznie adres dla https, np.:
-  echo          set HTTPS_PROXY=http://serwer:port
-  echo.
-  goto proxydone
-)
-set "HTTP_PROXY=http://%PROXYSRV%"
-set "HTTPS_PROXY=http://%PROXYSRV%"
-echo Ide przez firmowe proxy z ustawien Windowsa: %PROXYSRV%
-echo.
-goto proxydone
-
-:proxypac
-REM Plik PAC wybiera proxy skryptem - curl tego nie umie i nie ma jak zgadnac.
-if not defined PROXYPAC goto proxydone
-echo UWAGA: Windows uzywa pliku PAC: %PROXYPAC%
-echo        curl nie umie PAC-a. Adres faktycznego proxy podejrzysz w Chrome
-echo        pod chrome://net-internals/#proxy, a potem ustaw go tak:
-echo          set HTTPS_PROXY=http://serwer:port
-echo.
-
-:proxydone
-
 set "FORCE="
 set "LISTONLY="
 set "NOPAUSE="
@@ -153,11 +106,7 @@ echo [4/5] Pobieram liste wersji z release'u '%TAG%'...
 curl -fsSL -o "%WORK%\versions.txt" "%BASE%/versions.txt"
 if errorlevel 1 (
   echo       NIE UDALO SIE pobrac %BASE%/versions.txt
-  echo       Jesli ta sama strona otwiera sie w przegladarce, to znaczy, ze
-  echo       ruch idzie przez proxy, ktorego curl nie zna. Adres podejrzysz
-  echo       w Chrome pod chrome://net-internals/#proxy, a potem:
-  echo         set HTTPS_PROXY=http://serwer:port
-  echo       i uruchom instalator ponownie w tym samym oknie.
+  echo       Sprawdz polaczenie z siecia albo dostep do github.com.
   goto fail
 )
 REM Pusty plik przy kodzie 0 oznaczalby, ze curl poszedl za czyms innym niz
