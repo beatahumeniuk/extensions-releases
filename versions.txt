@@ -2,6 +2,6 @@ api-designer|beatahumeniuk.api-designer|0.35.0|api-designer.vsix
 confluence-to-md|beatahumeniuk.confluence-to-md|0.10.1|confluence-to-md.vsix
 db-playground|beatahumeniuk.db-playground|0.5.0|db-playground.vsix
 logic-analysis|beatahumeniuk.logic-analysis|0.8.1|logic-analysis.vsix
-openapi-tools|beatahumeniuk.openapi-tools|0.7.0|openapi-tools.vsix
+openapi-tools|beatahumeniuk.openapi-tools|0.8.0|openapi-tools.vsix
 schema-mapper|beatahumeniuk.schema-mapper|0.4.0|schema-mapper.vsix
 ui-analysis|beatahumeniuk.ui-analysis|0.17.1|ui-analysis.vsix
