@@ -82,16 +82,29 @@ jobs:
           # is also verified by reading back instead of trusting the call's
           # exit code: a transient 502 once deleted the release server-side
           # yet failed the step, leaving no release at all.
+          # The Releases API returns transient 5xx often enough to have
+          # broken this twice in one afternoon (a 502 on delete, a 503 on
+          # create), so every mutating call below is retried with a pause.
           api="repos/$GITHUB_REPOSITORY/releases"
 
-          # A draft left behind by an interrupted earlier run would pile up
-          # forever — sweep ours before staging a new one.
-          for id in $(gh api "$api?per_page=100" --jq ".[] | select(.draft and .tag_name==\"$RELEASE_TAG\") | .id"); do
-            gh api -X DELETE "$api/$id" >/dev/null 2>&1 || true
+          created=""
+          for attempt in 1 2 3 4; do
+            # A draft left behind by an interrupted run or a failed attempt
+            # would pile up forever — sweep ours before each try.
+            for id in $(gh api "$api?per_page=100" --jq ".[] | select(.draft and .tag_name==\"$RELEASE_TAG\") | .id" 2>/dev/null); do
+              gh api -X DELETE "$api/$id" >/dev/null 2>&1 || true
+            done
+            if gh release create "$RELEASE_TAG" staged/* --draft --target "$GITHUB_SHA" \
+                 --title "Latest build" --notes-file "$RUNNER_TEMP/release-notes.md"; then
+              created=yes
+              break
+            fi
+            sleep 10
           done
-
-          gh release create "$RELEASE_TAG" staged/* --draft --target "$GITHUB_SHA" \
-            --title "Latest build" --notes-file "$RUNNER_TEMP/release-notes.md"
+          if [[ -z "$created" ]]; then
+            echo "szkic release'u nie powstal mimo ponowien" >&2
+            exit 1
+          fi
           draft_id="$(gh api "$api?per_page=100" --jq "[.[] | select(.draft and .tag_name==\"$RELEASE_TAG\")][0].id")"
           if [[ -z "$draft_id" || "$draft_id" == "null" ]]; then
             echo "szkic release'u nie powstal" >&2
@@ -116,6 +129,17 @@ jobs:
           fi
           gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$RELEASE_TAG" >/dev/null 2>&1 || true
 
-          gh api -X PATCH "$api/$draft_id" -F draft=false \
-            -f tag_name="$RELEASE_TAG" -f target_commitish="$GITHUB_SHA" >/dev/null
+          published=""
+          for attempt in 1 2 3 4; do
+            if gh api -X PATCH "$api/$draft_id" -F draft=false \
+                 -f tag_name="$RELEASE_TAG" -f target_commitish="$GITHUB_SHA" >/dev/null; then
+              published=yes
+              break
+            fi
+            sleep 10
+          done
+          if [[ -z "$published" ]]; then
+            echo "publikacja szkicu nie powiodla sie mimo ponowien" >&2
+            exit 1
+          fi
           echo "Release $RELEASE_TAG odswiezony"
