@@ -1,0 +1,86 @@
+# Mirrors the repository's file list onto the rolling `latest-build` release —
+# the page the owner downloads from in a browser on the work machine.
+#
+# Runs on every push to main, i.e. every time the source repository's
+# publish workflow pushes a fresh set of packages here (a deploy-key push
+# does trigger workflows; only pushes made with the default GITHUB_TOKEN
+# don't). Assets are replaced in place, so the
+# .../releases/download/latest-build/... URLs never change, and the release
+# notes are rewritten with the build date and a version table, so the page
+# says at a glance whether the packages are newer than what is installed.
+#
+# This lives here, not in the source repository, because the deploy key the
+# publisher uses can only do git — it cannot reach the Releases API. This
+# repository's own GITHUB_TOKEN can, with no extra secret to manage.
+name: refresh-release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  RELEASE_TAG: latest-build
+
+concurrency:
+  group: refresh-release
+  cancel-in-progress: true
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Refresh the release from the file list
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [[ ! -f versions.txt ]]; then
+            echo "versions.txt not found — nothing to publish" >&2
+            exit 1
+          fi
+          mkdir -p staged
+          cp versions.txt staged/
+          for f in *.vsix all-extensions.zip build-and-install.sh skills.zip; do
+            [[ -e "$f" ]] && cp "$f" staged/
+          done
+          built_at="$(git log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M' HEAD) UTC"
+          source_note="$(git log -1 --format=%s HEAD)"
+          {
+            echo "Automatyczny build wszystkich rozszerzeń ze źródeł, odświeżany po każdej zmianie."
+            echo
+            echo "**Zbudowano:** $built_at · $source_note"
+            echo
+            echo "| Rozszerzenie | Wersja | Plik |"
+            echo "|---|---|---|"
+            while IFS='|' read -r dir id ver file; do
+              echo "| $id | $ver | [\`$file\`](https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/$file) |"
+            done < versions.txt
+            echo
+            echo "**Instalacja na maszynie bez sieci dla skryptów:** pobierz \`all-extensions.zip\`,"
+            echo "rozpakuj i uruchom \`bash build-and-install.sh --local\` — zainstaluje leżące"
+            echo "obok \`.vsix\`, pomijając to, co już aktualne. Pojedynczą paczkę można też"
+            echo "zainstalować ręcznie (**Extensions → … → Install from VSIX…**)."
+          } > "$RUNNER_TEMP/release-notes.md"
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            # An asset that is no longer produced disappears from the release
+            # for the same reason it disappears from the file list: left
+            # behind, it would sit there forever looking current.
+            for asset in $(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name'); do
+              if [[ ! -e "staged/$asset" ]]; then
+                gh release delete-asset "$RELEASE_TAG" "$asset" --yes
+              fi
+            done
+            gh release upload "$RELEASE_TAG" staged/* --clobber
+            gh release edit "$RELEASE_TAG" \
+              --title "Latest build" --notes-file "$RUNNER_TEMP/release-notes.md"
+          else
+            gh release create "$RELEASE_TAG" staged/* \
+              --title "Latest build" --notes-file "$RUNNER_TEMP/release-notes.md"
+          fi
+          echo "Release $RELEASE_TAG odswiezony"
