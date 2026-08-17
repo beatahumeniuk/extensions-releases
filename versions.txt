@@ -1,3 +1,4 @@
+analyst-skills|beatahumeniuk.analyst-skills|0.1.0|analyst-skills.vsix
 api-designer|beatahumeniuk.api-designer|0.38.0|api-designer.vsix
 confluence-to-md|beatahumeniuk.confluence-to-md|0.13.0|confluence-to-md.vsix
 db-playground|beatahumeniuk.db-playground|0.6.0|db-playground.vsix
