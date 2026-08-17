@@ -1,5 +1,5 @@
 api-designer|beatahumeniuk.api-designer|0.38.0|api-designer.vsix
-confluence-to-md|beatahumeniuk.confluence-to-md|0.13.0|confluence-to-md.vsix
+confluence-to-md|beatahumeniuk.confluence-to-md|0.14.0|confluence-to-md.vsix
 db-playground|beatahumeniuk.db-playground|0.6.0|db-playground.vsix
 jira-tasks|beatahumeniuk.jira-tasks|0.3.0|jira-tasks.vsix
 logic-design|beatahumeniuk.logic-design|0.13.0|logic-design.vsix
