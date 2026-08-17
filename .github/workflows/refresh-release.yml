@@ -49,7 +49,7 @@ jobs:
           for f in *.vsix all-extensions.zip build-and-install.sh skills.zip; do
             [[ -e "$f" ]] && cp "$f" staged/
           done
-          built_at="$(git log -1 --format=%cd --date=format:'%Y-%m-%d %H:%M' HEAD) UTC"
+          built_at="$(TZ=UTC git log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M' HEAD) UTC"
           source_note="$(git log -1 --format=%s HEAD)"
           {
             echo "Automatyczny build wszystkich rozszerzeń ze źródeł, odświeżany po każdej zmianie."
