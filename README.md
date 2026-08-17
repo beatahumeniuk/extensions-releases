@@ -8,18 +8,21 @@ zmianie w źródłach (data ostatniego commita = data ostatniego builda).
 Repozytorium jest publiczne, więc pobieranie idzie zwykłym HTTPS — bez tokena
 i bez logowania.
 
-**Nie korzystaj z zakładki [Releases](../../releases).** Paczki przestały być
-doczepiane do release'u — aktualny build to lista plików tego repozytorium.
-To, co ewentualnie wisi pod Releases, to nieaktualne resztki starego układu.
+Te same pliki wiszą jako załączniki release'u
+**[`latest-build`](../../releases/tag/latest-build)** — podmieniane w miejscu
+przez ten sam build, który aktualizuje listę plików, więc to jeden zestaw,
+nie dwa. Opis release'u niesie **datę builda, źródłowy commit i tabelę
+wersji** — po tym poznasz, że są nowe paczki.
 
 ## Instalacja na maszynie bez dostępu do sieci dla skryptów
 
 Na maszynie, na której sieć działa tylko w przeglądarce (firmowe proxy z PAC,
 którego `curl` nie przejdzie):
 
-1. Pobierz przeglądarką **[`all-extensions.zip`](all-extensions.zip)** — kliknij
-   plik na liście wyżej, potem przycisk **Download raw file**. W środku są
-   wszystkie `.vsix` oraz instalator.
+1. Pobierz przeglądarką
+   **[`all-extensions.zip`](../../releases/download/latest-build/all-extensions.zip)**
+   ze strony release'u [`latest-build`](../../releases/tag/latest-build).
+   W środku są wszystkie `.vsix` oraz instalator.
 2. Rozpakuj i w terminalu VS Code uruchom skrypt z rozpakowanego katalogu:
 
 ```bash
@@ -50,14 +53,15 @@ Po instalacji przeładuj okno VS Code (**Developer: Reload Window**).
 
 ## Instalacja ręczna
 
-Pojedynczą paczkę można pobrać z listy plików wyżej (**Download raw file**)
-i zainstalować przez **Extensions → `…` → Install from VSIX…**, albo:
+Pojedynczą paczkę można pobrać ze strony release'u (albo z listy plików wyżej,
+przycisk **Download raw file** — to ten sam zestaw) i zainstalować przez
+**Extensions → `…` → Install from VSIX…**, albo:
 
 ```bash
 code --install-extension api-designer.vsix
 ```
 
-## Co jest w repozytorium
+## Co jest w repozytorium i w release'ie
 
 | Plik | Zawartość |
 |---|---|
