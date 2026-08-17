@@ -1,16 +1,16 @@
 ---
 name: md-adopt
 description: >
-  Adopt existing markdown files into the analysis/ tree: detect the
+  Adopt existing markdown files into the solution-design/ tree: detect the
   document type, add or repair the YAML frontmatter, move the file to its
-  place in the analysis/ tree, and optionally align section names to the
+  place in the solution-design/ tree, and optionally align section names to the
   canonical set — always with approval, never inventing metadata. Use when
   the user says "dostosuj te md do formatu", "dodaj frontmatter",
-  "wciągnij ten plik do analizy", "znormalizuj dokumentację md",
+  "wciągnij ten plik do projektu", "znormalizuj dokumentację md",
   "adopt this markdown", "bring these files into the docs format".
 ---
 
-# md-adopt: Bring Existing Markdown Into the analysis/ Tree
+# md-adopt: Bring Existing Markdown Into the solution-design/ Tree
 
 The team enters the process at any point: plenty of markdown already exists —
 written by hand, exported by older tool versions, pasted from Confluence
@@ -27,11 +27,11 @@ section sets.
 
 - **Never writes into `docs/`.** That tree is the deliverable written by
   hand for developers and testers; no tool and no skill touches it. Adoption
-  lands in `analysis/`. A file already sitting in `docs/` is left alone.
+  lands in `solution-design/`. A file already sitting in `docs/` is left alone.
 
 - Does not regenerate tool exports. If a file is an outdated copy of
   something an extension can export (a contract md whose spec still exists,
-  a view analysis whose `view.json` is present), the right move is
+  a view design whose `view.json` is present), the right move is
   **re-export from the tool**, not adoption — say so and stop for that file.
 - Does not mark adopted files `managed: true`. That flag is reserved for
   tool-generated renderings; hand-written files get `generator: manual` and
@@ -50,11 +50,11 @@ section sets.
 `$ARGUMENTS`: one or more file paths, a folder, or empty.
 
 - Files/folder given → those are the candidates.
-- Empty → scan the workspace for `*.md` outside `analysis/` and `docs/`
+- Empty → scan the workspace for `*.md` outside `solution-design/` and `docs/`
   (excluding
   `node_modules/`, `README*`, `AGENTS*`, `CLAUDE*`, `.cursor/rules/`,
   `.github/copilot-instructions.md`, `*.mdc`, `.windsurfrules`, and
-  `context/`) plus files inside `analysis/` with missing/invalid frontmatter.
+  `context/`) plus files inside `solution-design/` with missing/invalid frontmatter.
   Present the candidate list; the user picks.
 
 ## Procedure
@@ -69,18 +69,18 @@ Match on what the format guarantees:
 
 | Typ | Kształt, po którym poznajesz |
 |---|---|
-| view-analysis | wiersze komponentów ``- **Nazwa** (`Typ`)`` pod nagłówkiem `##`, gdzie `Typ` jest jednym z typów analitycznych |
+| view-design | wiersze komponentów ``- **Nazwa** (`Typ`)`` pod nagłówkiem `##`, gdzie `Typ` jest jednym z typów komponentów |
 | field-mapping | tabela mapowań: kolumna ze ścieżką pola źródłowego i docelowego w grawisach |
 | contract | tabela modelu danych z kolumnami typu i ograniczeń plus lista operacji |
-| api-analysis | blok kodu z sekwencją kroków `1. <rodzaj>` i gałęziami `success`/`error` |
+| api-design | blok kodu z sekwencją kroków `1. <rodzaj>` i gałęziami `success`/`error` |
 | value-dictionary | tabela dwukolumnowa kod → opis, przy `type: value-dictionary` we frontmatterze |
 | confluence-page | blok `confluence:` we frontmatterze albo URL źródłowy |
-| `<artefakt>-part` | frontmatter z `part:` i `parent:` — plik jest jedną częścią analizy, nie analizą |
+| `<artefakt>-part` | frontmatter z `part:` i `parent:` — plik jest jedną częścią projektu, nie projektem |
 
 Frontmatter, jeśli jest, wygrywa z heurystyką — `type` zapisany w pliku jest
 deklaracją autora, nie zgadywanką.
 
-**Analiza wyeksportowana przez rozszerzenie jest podzielona na pliki.** Indeks
+**Projekt wyeksportowany przez rozszerzenie jest podzielony na pliki.** Indeks
 (`<widok>.md`, `api.md`) niesie tożsamość, frontmatter i spis treści; sekcje
 i kroki leżą obok, w `sections/` i `parts/`. Ma to dwa skutki przy
 klasyfikacji:
@@ -92,7 +92,7 @@ klasyfikacji:
 - **część nie jest kandydatem do adopcji** — jest już w formacie i należy do
   swojego indeksu. Wskazana wprost, traktuj ją jako wskazanie na `parent:`.
 
-Dokument jednoplikowy jest **równie poprawny**: tak wygląda analiza napisana
+Dokument jednoplikowy jest **równie poprawny**: tak wygląda projekt napisany
 ręcznie, wyeksportowana starszą wersją rozszerzenia albo wrócona z Confluence.
 Adopcja niczego nie dzieli sama z siebie — patrz Krok 3.
 
@@ -109,7 +109,7 @@ pointing at the export. Not found → proceed with adoption.
 
 ### Step 3 — Propose, per file
 
-Show a compact proposal: detected `type`, target path in the analysis/ tree,
+Show a compact proposal: detected `type`, target path in the solution-design/ tree,
 the exact frontmatter block to be added (with every unknown key omitted and
 listed as "nieznane — pominięte"), and — if section names deviate from the
 canonical set — the rename list (`## Pola` → `## Model danych`). Body content
@@ -119,14 +119,14 @@ none of them rewrites a sentence.
 
 **Dependency extraction.** If the body embeds a Maven fragment (a code block
 or raw XML containing `<dependency>` elements), propose moving it out: write
-the fragment to `analysis/external/<klient>/dependency.xml` (client proposed
+the fragment to `solution-design/external/<klient>/dependency.xml` (client proposed
 from the
 document, confirmed by the user) with the provenance comment header per the
 schema, and replace the block in the md with a link to it. This keeps XML out of the
 markdown — a docs review flags embedded code, and pasted XML drifts.
 
 **Podział na indeks i części — propozycja, nigdy domyślnie.** Plik
-sklasyfikowany jako `view-analysis` albo `api-analysis`, który ma kanoniczne
+sklasyfikowany jako `view-design` albo `api-design`, który ma kanoniczne
 bloki `##`, można rozłożyć tak, jak robi to eksport: indeks z frontmatterem,
 tytułem i spisem linków, a każdy blok jako osobny plik w `sections/`
 (odpowiednio `parts/`). Zaproponuj to razem z resztą zmian, jednym zdaniem
@@ -134,7 +134,7 @@ i listą plików, które powstaną. Zasady, gdy użytkownik się zgodzi:
 
 - **treść bloku jedzie bez zmian**, razem ze swoim nagłówkiem `## N.`;
   podział przenosi tekst między plikami, nie przepisuje go;
-- **nazwy części** biorą się z kontraktu: w analizie widoku `section-01.md`,
+- **nazwy części** biorą się z kontraktu: w projekcie widoku `section-01.md`,
   `section-02.md`… po jednym na sekcję, plus stałe `endpoints.md`
   i `open-questions.md`;
   w przepływie `request.md`, `step-NN-<typ>.md` (typ to angielski literał
@@ -157,12 +157,12 @@ target and renames); the user approves all, or a subset by naming files.
 
 For approved files: write the frontmatter, move the file (real move, so git
 tracks the rename), apply approved heading renames, and update links that
-pointed at the old path from within analysis/. One file = one logical change.
+pointed at the old path from within solution-design/. One file = one logical change.
 
 When the split was approved, do it **after** the move, so the package folder
 is already in its final place: write the part files, replace the blocks in the
 index with the list of links, and leave the index's own frontmatter untouched.
-Nothing else in `analysis/` links into a document's blocks, so no external link
+Nothing else in `solution-design/` links into a document's blocks, so no external link
 has to be rewritten — but a link that pointed at the file itself still resolves,
 because the index kept its name.
 
@@ -171,7 +171,7 @@ because the index kept its name.
 List adopted files (old path → new path), skipped files with reasons, and
 any recommended re-exports. For a document that was split: the index and how
 many parts it now has, plus every block that stayed in the index because no
-canonical name fit it. Suggest `/docs-review analysis/` as the natural next
+canonical name fit it. Suggest `/docs-review solution-design/` as the natural next
 check — but do not run it.
 
 ## Edge cases
@@ -188,7 +188,7 @@ check — but do not run it.
   z `parent:`) — nie adoptuj jej. Zgłoś ją jako wskazanie na indeks i sprawdź
   ten; część, której `parent:` nie prowadzi do istniejącego pliku, wypisz jako
   sierotę (indeks skasowany albo przeniesiony) i **nie awansuj** jej na
-  samodzielny dokument — to zamieniłoby jedną analizę w sześć.
+  samodzielny dokument — to zamieniłoby jeden projekt w sześć.
 - **Skan bez argumentów** — pomiń pliki części tak samo jak `README*`: są już
   w formacie i mają swojego właściciela.
 - **Polish/English mixed content** — leave the language alone; adoption is

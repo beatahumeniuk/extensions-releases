@@ -10,17 +10,17 @@ display names inside documents are Polish.
 
 ## Gdzie trafiają adoptowane pliki
 
-Dwa drzewa, jedna zasada: **`analysis/` jest generowane i tam wchodzi adopcja,
+Dwa drzewa, jedna zasada: **`solution-design/` jest generowane i tam wchodzi adopcja,
 `docs/` jest pisane ręcznie i żadne narzędzie ani skill tam nie zapisuje.**
 `docs/` to dokumentacja docelowa dla programisty i testera — recenzowana,
 trwała, i nie może zginąć pod przebiegiem narzędzia.
 
 ```
-analysis/
-  ui/<widok>/<widok>.md         # type: view-analysis   (UI Analysis) — indeks
-  ui/<widok>/sections/*.md      # type: view-analysis-part — sekcje analizy
-  api/<ścieżka>/api.md          # type: api-analysis    (Logic Analysis) — indeks
-  api/<ścieżka>/parts/*.md      # type: api-analysis-part — części przepływu
+solution-design/
+  ui/<widok>/<widok>.md         # type: view-design   (UI Design) — indeks
+  ui/<widok>/sections/*.md      # type: view-design-part — sekcje projektu
+  api/<ścieżka>/api.md          # type: api-design    (Logic Design) — indeks
+  api/<ścieżka>/parts/*.md      # type: api-design-part — części przepływu
   api/contracts/<nazwa>.md      # type: contract        (API Designer)
   api/<ścieżka>/<cel>.mapping.md # type: field-mapping  (Schema Mapper)
   db/model/<źródło>-schema.md   # type: db-playground-schema (DB Playground)
@@ -43,18 +43,18 @@ Order is fixed; omit a key rather than write an empty value.
 
 | Key | Required | Values / format | Notes |
 |---|---|---|---|
-| `type` | yes | `contract` · `field-mapping` · `view-analysis` · `api-analysis` · `db-playground-schema` · `confluence-page` · `<artefakt>-part` | what the document is; `-part` = jedna część analizy podzielonej na pliki |
+| `type` | yes | `contract` · `field-mapping` · `view-design` · `api-design` · `db-playground-schema` · `confluence-page` · `<artefakt>-part` | what the document is; `-part` = jedna część projektu podzielonego na pliki |
 | `generator` | yes | `<tool>@<version>` or `manual` | `manual` = written by a person, editable |
 | `generated` | when known | `YYYY-MM-DD` | when the CONTENT was produced; never guessed |
 | `adopted` | adoption only | `YYYY-MM-DD` | when `/md-adopt` brought the file into the format and `generated` is unknown |
 | `source` | when known | workspace-relative path or URL | the source of truth this document renders/describes |
 | `sourceId` | per type | page id, record name | identity within the source system |
-| `mockup` | view-analysis | Figma URL (with `node-id`) | link to the mockup the view was analyzed from; recorded by the Figma import and carried through every round trip |
+| `mockup` | view-design | Figma URL (with `node-id`) | link to the mockup the view comes from; recorded by the Figma import and carried through every round trip |
 | `operation` | contract only | operation label | per-service narrowed export |
 | `space` | confluence only | space key | |
 | `status` | per type | `draft` · `complete` | computed by generators; set by hand for manual docs |
-| `components` / `openIssues` / `coverage` | view-analysis only | numbers | counters computed at export |
-| `part` | `-part` only | nazwa części (`section-01`, `endpoints`, `open-questions`, `step-01`…) | która to część analizy |
+| `components` / `openIssues` / `coverage` | view-design only | numbers | counters computed at export |
+| `part` | `-part` only | nazwa części (`section-01`, `endpoints`, `open-questions`, `step-01`…) | która to część projektu |
 | `parent` | `-part` only | ścieżka względna do indeksu | plik, którego spis treści linkuje tę część |
 | `managed` | tool exports only | `true` | fully regenerated from `source` — **never hand-edited**; a hand-written file must NOT carry it |
 
@@ -68,8 +68,8 @@ Used by generators, by `/md-adopt`'s optional restructuring, and by importers.
 H1 is always the document title.
 
 - **contract** — meta table under H1 (`| Wersja kontraktu | … |`, `| Format | … |`), then `## Endpointy` (`### <tag>` → `#### `METHOD /path``) and/or `## Operacje` / `## Elementy główne`, then `## Model danych` (`### <Klasa>` + fields table `| Pole | Typ | Wymagane | Ograniczenia | Opis |`).
-- **field-mapping** — meta table, `## Źródła`, `## Mapowania pól` (`### <grupa>.*` + table `| Pole docelowe | Typ | Liczność | Źródło | Pole źródłowe | Konwersja / agregacja | Gdy NULL | Status |`), optional `## Braki`, `## Notatki`. *Being phased out:* Schema Mapper is absorbed by Logic Analysis (mappings become flow steps); the type stays valid for existing exports, new mappings are documented inside `api-analysis`.
-- **view-analysis** — numbered `## N. <sekcja>`; nazwy sekcji zależą od
+- **field-mapping** — meta table, `## Źródła`, `## Mapowania pól` (`### <grupa>.*` + table `| Pole docelowe | Typ | Liczność | Źródło | Pole źródłowe | Konwersja / agregacja | Gdy NULL | Status |`), optional `## Braki`, `## Notatki`. *Being phased out:* Schema Mapper is absorbed by Logic Design (mappings become flow steps); the type stays valid for existing exports, new mappings are documented inside `api-design`.
+- **view-design** — numbered `## N. <sekcja>`; nazwy sekcji zależą od
   ustawień zespołu, więc rozpoznawaj po kształcie: sekcja struktury to ta,
   w której są wiersze komponentów ``- **Etykieta** (`Typ`) — reguły``,
   a nagłówek z typem w nawiasie — `## 1. Dane klienta  _(Sekcja)_` w pliku
@@ -78,18 +78,19 @@ H1 is always the document title.
   **Dokument jest podzielony na pliki** (patrz „Split documents"): jeden plik
   na sekcję widoku, więc wierszy komponentów szukaj w `sections/`, nie
   w indeksie — indeks ich nie ma.
-- **api-analysis** — export of the Logic Analysis extension (flow analysis of
+- **api-design** — export of the Logic Design extension (flow design of
   a process/service): H1 `# API: <nazwa>`, numbered step sections
   (walidacja, odczyt/zapis bazy, mapowanie, wywołanie usługi zewnętrznej,
   przekształcenie, event Kafka) and response sections per HTTP status. Source
-  of truth: `analysis/api/<ścieżka>/api.json`.
-  Documents written before the rename carry `type: process-flow-analysis`
-  and H1 `# Analiza flow: <nazwa>`; both are still recognised on read.
+  of truth: `solution-design/api/<ścieżka>/api.json`.
+  Documents older than the current naming declare a different `type` and a
+  different H1; detection goes by the shape of the document, not by the type
+  it declares, so they are still recognised on read.
   **Dokument jest podzielony na pliki** (patrz „Split documents"): pod
   `## Przebieg` diagram i spis tego, co się kiedy dzieje, a treść kroków,
   odpowiedzi i kwestii otwartych w `parts/`. Sekcja „Kwestie
   otwarte" to tabela `| Czego dotyczy | Krok | Status | Komentarz |` z tym
-  samym zestawem statusów co w analizie widoku.
+  samym zestawem statusów co w projekcie widoku.
 - **db-playground-schema** — export of DB Playground: summary table, one section per
   table/collection (columns with types, constraints, indexes), relations
   table + Mermaid ER diagram for SQL sources. Extra frontmatter:
@@ -104,7 +105,7 @@ the canonical name, or importers and `/handoff-package` will not see it.
 
 ## Split documents (index + parts)
 
-`view-analysis` and `api-analysis` are written as **an index plus one file per
+`view-design` and `api-design` are written as **an index plus one file per
 part**. The other types are single files.
 
 **The index** carries the artifact's frontmatter (`type`, `generator`,
@@ -113,8 +114,8 @@ content of its own:
 
 | Typ | Katalog | Kształt spisu |
 |---|---|---|
-| `view-analysis` | `sections/` | `N. [tytuł](sections/plik.md)` pod nagłówkiem spisu treści, N = pozycja w spisie |
-| `api-analysis` | `parts/` | `- [tytuł](parts/plik.md)` pod `## Przebieg`, po diagramie Mermaid |
+| `view-design` | `sections/` | `N. [tytuł](sections/plik.md)` pod nagłówkiem spisu treści, N = pozycja w spisie |
+| `api-design` | `parts/` | `- [tytuł](parts/plik.md)` pod `## Przebieg`, po diagramie Mermaid |
 
 **A part** is one block of the document — its own `## ` heading included —
 under a short frontmatter. For a view that block is **one section of the view**,
@@ -123,17 +124,17 @@ validation findings; only the endpoint catalogue and the open questions cut
 across sections and stay separate.
 
 ```yaml
-type: view-analysis-part   # albo api-analysis-part
+type: view-design-part   # albo api-design-part
 part: section-01           # widok: section-NN, albo endpoints · open-questions
                            # przepływ: request · step-01 · step-02 · … ·
                            #           responses · open-questions
 parent: ../login.md        # albo ../api.md
-generator: ui-analysis@0.14.0
+generator: ui-design@0.14.0
 generated: 2026-08-16
 managed: true              # tylko gdy indeks też jest managed
 ```
 
-**File names.** A view analysis has **one file per section of the view**,
+**File names.** A view design has **one file per section of the view**,
 numbered (`section-01.md`) rather than named after it — without a heading in
 the mockup a section's name is built out of its first few labels, so adding one
 field would rename the file. Each carries that section's components together
@@ -147,9 +148,9 @@ not rename the ones that stay. A flow's parts are `request.md`,
 `step-NN-<type>.md` — the ordinal because order is the content there, the step
 type because file names are English everywhere in the tree and a step's title
 is written in the analyst's own language — `responses.md` and
-`open-questions.md`, which comes last, after everything the analysis does know.
+`open-questions.md`, which comes last, after everything the design does know.
 Client libraries are not a part: the pom fragment lives in
-`analysis/external/<klient>/dependency.xml` and the step that calls the service
+`solution-design/external/<klient>/dependency.xml` and the step that calls the service
 links to it.
 
 **Regeneration.** Parts are written together with the index: a section with
@@ -161,7 +162,7 @@ Reading rules for every consumer: **count and link the index, read the parts**.
 A single-file document (hand-written, an older export, a page fetched back from
 Confluence) is equally valid — it simply has no links to follow.
 
-## Dependency fragments (`analysis/external/<klient>/dependency.xml`)
+## Dependency fragments (`solution-design/external/<klient>/dependency.xml`)
 
 Libraries the implementation will need are **never embedded in markdown as
 code blocks** — a docs review would rightly flag them, and pasted XML drifts.

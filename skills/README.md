@@ -1,13 +1,13 @@
 # analyst-skills
 
-Skille analityczne w formacie **Agent Skills** (otwarty standard,
+Skille analityka w formacie **Agent Skills** (otwarty standard,
 [agentskills.io](https://agentskills.io)) — zwykłe foldery z `SKILL.md`,
 niezależne od harnessu.
 
 Mieszkają tutaj, a nie w osobnym repozytorium, bo ich kontrakt jest tutaj:
 schemat wyjścia, wygenerowana lista kluczy pól i walidator, na którym
-`view-from-code` opiera swój ostatni krok, są w `ui-analysis/schema/`
-i `ui-analysis/vscode-extension/scripts/`. Trzymane osobno rozjeżdżały
+`view-from-code` opiera swój ostatni krok, są w `ui-design/schema/`
+i `ui-design/vscode-extension/scripts/`. Trzymane osobno rozjeżdżały
 się z nimi po cichu — test w rozszerzeniu pilnuje teraz schematu, a skille
 widzą go w tym samym drzewie.
 
@@ -19,7 +19,7 @@ Jedno kryterium rozstrzyga, gdzie mieszka funkcja:
 ma zamknięty format wejścia, jedną poprawną odpowiedź i test golden:
 edycja modelu w GUI, rendering modelu → md, parsing **własnego** md → model
 (round-trip), transport Confluence (fetch/publish/sync), zapis w ustalone
-ścieżki `analysis/`, strukturalna detekcja **własnych** formatów (zamknięta
+ścieżki `solution-design/`, strukturalna detekcja **własnych** formatów (zamknięta
 lista literałów; wszystko inne uczciwie dostaje `confluence-page`).
 
 **Skill agenta** robi wszystko, co wymaga **osądu i rozumienia treści** —
@@ -40,13 +40,13 @@ tą samą regułą podbijania wersji co reszta rozszerzenia:
 
 | Skill | Katalog | Instalacja |
 |---|---|---|
-| `flow-from-code` | `logic-analysis/skill/` | komenda **Logic Analysis: Zainstaluj skill dla agenta** |
-| `view-from-code` | `ui-analysis/vscode-extension/skill/` | komenda **UI Analysis: Zainstaluj skill dla agenta** |
+| `flow-from-code` | `logic-design/skill/` | komenda **Logic Design: Zainstaluj skill dla agenta** |
+| `view-from-code` | `ui-design/vscode-extension/skill/` | komenda **UI Design: Zainstaluj skill dla agenta** |
 | `handoff-package` | tutaj | ręcznie, patrz niżej |
 | `md-adopt` | tutaj | ręcznie, patrz niżej |
 
-Tutaj zostają skille **poprzeczne**: `handoff-package` czyta analizy ze
-wszystkich rozszerzeń naraz, `md-adopt` normalizuje całe drzewo `analysis/` —
+Tutaj zostają skille **poprzeczne**: `handoff-package` czyta projekty ze
+wszystkich rozszerzeń naraz, `md-adopt` normalizuje całe drzewo `solution-design/` —
 żadnego z nich nie da się przypisać do jednego rozszerzenia.
 
 Rozszerzenia zapisują skill tam, gdzie wskazuje **`agentSkills.target`** —
@@ -104,26 +104,26 @@ Uwagi per harness:
 Dwa pierwsze mieszkają w swoich rozszerzeniach (patrz tabela wyżej), dwa
 kolejne — tutaj.
 
-- **flow-from-code** (`logic-analysis/skill/`) — z kodu endpointu buduje szkic
-  pakietu Logic Analysis (`analysis/api/<endpoint>/api.json` + `endpoint.json`
+- **flow-from-code** (`logic-design/skill/`) — z kodu endpointu buduje szkic
+  pakietu Logic Design (`solution-design/api/<endpoint>/api.json` + `endpoint.json`
   i przykłady: kroki w kolejności wykonania, integracje z bibliotekami
   klienckimi, odpowiedzi per status HTTP, kwestie otwarte z dowodami
   `plik:linia`).
-- **view-from-code** (`ui-analysis/vscode-extension/skill/`) — z kodu
-  zaimplementowanego widoku wypełnia `analysis/ui/<widok>/view-mapping.json`
+- **view-from-code** (`ui-design/vscode-extension/skill/`) — z kodu
+  zaimplementowanego widoku wypełnia `solution-design/ui/<widok>/view-mapping.json`
   (typy komponentów, reguły walidacji, warunki widoczności, test id,
   endpointy, kwestie otwarte z dowodami `plik:linia`). Widoku nigdy
   nieprzeniesionego z Figmy zakłada od zera — `view.json` pisze wtedy
   `scripts/seed-view.ts`, nie skill. Test ID bierze w kolejności: kod →
-  analiza → dopiero reguła, a istniejącego nie rusza; rozjazd między kodem
-  a analizą zapisuje jako konflikt (`GEN-003`) i zostawia do rozstrzygnięcia
+  projekt → dopiero reguła, a istniejącego nie rusza; rozjazd między kodem
+  a projektem zapisuje jako konflikt (`GEN-003`) i zostawia do rozstrzygnięcia
   analitykowi.
-- **handoff-package** — składa z materiału w `analysis/` commitowany folder
+- **handoff-package** — składa z materiału w `solution-design/` commitowany folder
   zmiany `context/changes/<feature-id>/` (nazewnictwo 10x: `change.md`,
   `spec.md`, `test-spec.md`, `open-questions.md`) dla programisty i testera —
-  z linkami do artefaktów w `analysis/`, bez kopii. Inventory-first: wejście
+  z linkami do artefaktów w `solution-design/`, bez kopii. Inventory-first: wejście
   w dowolnym punkcie procesu.
-- **md-adopt** — wciąga istniejące pliki md do drzewa `analysis/`
+- **md-adopt** — wciąga istniejące pliki md do drzewa `solution-design/`
   (frontmatter, lokalizacja, kanoniczne sekcje, opcjonalny podział na indeks
   i części). Kontrakt formatu:
   [md-adopt/references/frontmatter-schema.md](md-adopt/references/frontmatter-schema.md).
@@ -131,23 +131,23 @@ kolejne — tutaj.
 Zasada wspólna skilli `*-from-code`: emitują **natywny pakiet roboczy
 narzędzia** (to, co rozszerzenie otwiera wprost), nigdy markdown — kanoniczny
 md powstaje zawsze jednym eksportem z narzędzia, po weryfikacji analityka.
-Dzięki temu nigdy nie istnieją dwa konkurencyjne renderingi tej samej analizy.
+Dzięki temu nigdy nie istnieją dwa konkurencyjne renderingi tego samego projektu.
 
-**Analiza jest podzielona na pliki.** Eksport daje indeks (`<widok>.md`,
+**Projekt jest podzielony na pliki.** Eksport daje indeks (`<widok>.md`,
 `api.md`) i obok niego części — sekcje widoku w `sections/`, kroki przepływu
 w `parts/` — każda z `type: <artefakt>-part`, `part:` i `parent:`. Skille liczą
-i linkują **indeks**, a czytają **części**: analiza policzona po plikach to
+i linkują **indeks**, a czytają **części**: projekt policzony po plikach to
 sześć artefaktów zamiast jednego. Dokument jednoplikowy (pisany ręcznie,
 starszy eksport, strona wrócona z Confluence) jest równie poprawny i czyta się
 go wprost.
 
-W Logic Analysis **`parts/` to wyłącznie kroki procesu**. Kontrakt wejścia
+W Logic Design **`parts/` to wyłącznie kroki procesu**. Kontrakt wejścia
 i wyjścia oraz kwestie otwarte krokami nie są, więc leżą obok indeksu
 (`request.md`, `responses.md`, `open-questions.md`) i dodatkowo są wydrukowane
 w `api.md` — indeks czyta się od góry do dołu i widać z niego wszystko poza
 szczegółami kroków.
 
 Skille zakładają format dokumentacji generowany przez rozszerzenia VS Code
-z repo `extensions` (API Designer, Schema Mapper, UI Analysis,
-Logic Analysis, DB Playground, Confluence to md) — ale działają na każdym
-drzewie `analysis/` zgodnym z kontraktem frontmattera.
+z repo `extensions` (API Designer, Schema Mapper, UI Design,
+Logic Design, DB Playground, Confluence to md) — ale działają na każdym
+drzewie `solution-design/` zgodnym z kontraktem frontmattera.

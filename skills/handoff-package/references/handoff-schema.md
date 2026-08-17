@@ -13,7 +13,7 @@ project.
 
 The handoff is **committed to the analyst repo** — the developer and the
 tester (and their agents) read it from the repository, not from an
-out-of-band copy. Artifacts stay where they are in `analysis/` and are
+out-of-band copy. Artifacts stay where they are in `solution-design/` and are
 **linked, never copied**: one repo, one home per fact.
 
 ```
@@ -24,13 +24,13 @@ context/changes/<feature-id>/
   open-questions.md     # every gap, each with Block: yes|no
 ```
 
-All links inside these files are repo-relative (`../../analysis/ui/login/login.md`)
+All links inside these files are repo-relative (`../../solution-design/ui/login/login.md`)
 and must resolve within the repository.
 
-An analysis in `analysis/` is an **index plus its parts** — `login.md` with
+A design in `solution-design/` is an **index plus its parts** — `login.md` with
 `sections/*.md` beside it, `api.md` with `parts/*.md`. Link the index when you
-mean the analysis, link the part when you mean one thing inside it
-(`../../analysis/ui/login/sections/section-01.md`). Both are links into the
+mean the design, link the part when you mean one thing inside it
+(`../../solution-design/ui/login/sections/section-01.md`). Both are links into the
 same artifact; only one of them makes the reader scroll.
 
 ## change.md
@@ -57,8 +57,8 @@ blockers: <n>              # open questions with Block: yes
 ## Start
 ```
 
-- **Zakres** — 3–8 zdań: co budujemy, z linkami do artefaktów w `analysis/`
-  (`[widok logowania](../../analysis/ui/login/login.md)`).
+- **Zakres** — 3–8 zdań: co budujemy, z linkami do artefaktów w `solution-design/`
+  (`[widok logowania](../../solution-design/ui/login/login.md)`).
 - **Stan zastany** — co już istnieje i działa zanim ten change powstał:
   wdrożony kod, wcześniejsze wersje kontraktów, części procesu zrobione
   wcześniej. Per pozycja: jedno zdanie + skąd to wiadomo (artefakt albo
@@ -69,14 +69,14 @@ blockers: <n>              # open questions with Block: yes
   Jeśli nic nie wykluczono w wywiadzie, wpisz `# TODO: potwierdź zakres
   wykluczeń` i dodaj Open Question.
 - **Artefakty** — tabela: `| Artefakt | Typ | Źródło | Wygenerowano | Status |`.
-  `Artefakt` = repo-relative link do **indeksu** artefaktu w `analysis/`
-  (analiza podzielona na pliki jest **jednym wierszem**, nie sześcioma —
+  `Artefakt` = repo-relative link do **indeksu** artefaktu w `solution-design/`
+  (projekt podzielony na pliki jest **jednym wierszem**, nie sześcioma —
   części nie mają tu własnych wierszy); `Źródło` i
   `Wygenerowano` przepisane z frontmattera artefaktu; `Status` = `fresh` |
   `stale` (źródło nowsze niż eksport) | `unknown` (brak danych). Fragmenty
-  zależności (`analysis/external/<klient>/dependency.xml`) też są wierszami tej tabeli.
+  zależności (`solution-design/external/<klient>/dependency.xml`) też są wierszami tej tabeli.
   **Per widok w zakresie tabela ma dodatkowy wiersz `Makieta`** z linkiem do
-  Figmy (klucz `mockup:` z frontmattera analizy; gdy go brak — dopytany w
+  Figmy (klucz `mockup:` z frontmattera projektu; gdy go brak — dopytany w
   wywiadzie). Programista i tester dostają link do makiety zawsze, wprost
   z change.md.
 - **Kolejność czytania** — numerowana lista dla agenta odbiorcy: 1. change.md,
@@ -111,8 +111,8 @@ generated: <YYYY-MM-DD>
 ```
 
 IDs `Q-NN`, append-only within a run. Every open issue imported from a view
-analysis (`sections/open-questions.md`), from a
-flow analysis (`parts/open-questions.md`), every `## Braki` entry from a mapping,
+design (`sections/open-questions.md`), from a
+flow design (`parts/open-questions.md`), every `## Braki` entry from a mapping,
 and every cross-check failure lands here. Rozwiązane i „nie dotyczy" nie są
 kwestiami otwartymi i nie trafiają tu wcale. `Źródło` links the file the issue was
 read from — the section, not the index. **Never resolved by the skill** —
@@ -139,17 +139,17 @@ generated: <YYYY-MM-DD>
 
 Rules:
 - **Signal, not knowledge** (wzorzec z 10x-test-plan): the file points at
-  evidence in `analysis/` (`[POST /api/login](../../analysis/api/contracts/auth.md)`), it
+  evidence in `solution-design/` (`[POST /api/login](../../solution-design/api/contracts/auth.md)`), it
   does not restate tables that already exist in the artifacts, and it
   **never** references files or line numbers in the developer's own repo.
 - **Widoki i akcje** — per view: one paragraph of intent + link to the
-  analysis in `analysis/ui/` **and the Figma mockup link** (`mockup:` frontmatter);
+  design in `solution-design/ui/` **and the Figma mockup link** (`mockup:` frontmatter);
   list only the actions with non-obvious flow (error branches, modals), each
   pointing at the section file where its component is described.
 - **Mapowania pól** — per mapping: target schema, sources, link; call out
   every `transform` and `whenNull` rule as implementation obligations.
 - **Zależności** — table `| Plik | Po co |`, one row per
-  `analysis/external/<klient>/dependency.xml` in scope, each a repo-relative link to
+  `solution-design/external/<klient>/dependency.xml` in scope, each a repo-relative link to
   the paste-ready Maven fragment. Never quote the XML inline. Omit the
   section when no fragments are in scope.
 - **Czego tu nie ma** — honest list: things the developer must decide or
@@ -168,13 +168,13 @@ generated: <YYYY-MM-DD>
 ## Ryzyka
 ## Reguły walidacji per komponent
 ## Przypadki brzegowe z ograniczeń
-## Luki wykryte przez analizę
+## Luki wykryte przez projekt
 ## Kwestie otwarte istotne dla testów
 ```
 
 Rules:
 - **Ryzyka** — table `| Ryzyko | Dowód | Najtańsza warstwa testu |`, ordered
-  by leverage. `Dowód` links into `analysis/` (validation finding code, contract
+  by leverage. `Dowód` links into `solution-design/` (validation finding code, contract
   constraint, mapping gap) — at the section file that carries it, not at the
   index. No invented risks: every
   row cites evidence.
@@ -184,7 +184,7 @@ Rules:
 - **Przypadki brzegowe z ograniczeń** — derived mechanically from contract
   constraints (enum values, min/max, response codes) and mapping cardinality
   (`może być null`, listy) — enumerate, don't editorialize.
-- **Luki wykryte przez analizę** — every `⨯`/`△` finding and `— brak obsługi
+- **Luki wykryte przez projekt** — every `⨯`/`△` finding and `— brak obsługi
   błędu` from the artifacts, verbatim with its rule code. These are
   must-challenge items.
 - The file **plans no test implementation** — no test code, no framework
@@ -200,35 +200,35 @@ handoff can additionally be **delivered** there:
 <dev-repo>/docs/features/<feature-id>/
   spec.md        # copy of the change's spec.md — a THIN INDEX, never a container
   test-spec.md   # copy of the change's test-spec.md
-  analysis/      # the depth: delivered copies of the scoped analysis/ artifacts
+  solution-design/      # the depth: delivered copies of the scoped solution-design/ artifacts
     views/<view>/<view>.md      # the index…
     views/<view>/sections/*.md  # …and its sections, beside it
-    flows/<flow>/api.md         # likewise for a flow analysis…
+    flows/<flow>/api.md         # likewise for a flow design…
     flows/<flow>/parts/*.md     # …and its parts
     contracts/<name>.md
     db/<name>-schema.md
     dependencies/<name>.pom.xml
 ```
 
-A split analysis keeps its package folder in the delivery: the links inside an
+A split design keeps its package folder in the delivery: the links inside an
 index are relative to it (`sections/section-01.md`), so a flattened copy would arrive
 with every link broken. Single-file artifacts (contracts, mappings, schemas,
 dependency fragments) are delivered as the single files they are.
 
 `spec.md` is deliberately small: intent, scope, stan zastany, reading order
 and links — it never inlines tables or rules that live in the artifacts.
-Whatever does not fit a paragraph belongs in `analysis/` as a whole file,
+Whatever does not fit a paragraph belongs in `solution-design/` as a whole file,
 so the feature folder scales with the feature while `spec.md` stays a
 two-page entry point.
 
 Rules:
 
-- The canonical home stays `context/changes/<feature-id>/` (and `analysis/`) in
+- The canonical home stays `context/changes/<feature-id>/` (and `solution-design/`) in
   the analyst repo — the delivery is an export, refreshed on re-runs. Copies
   across repos are fine: this is a different repository, and the copies are
   machine-refreshed, never hand-edited.
 - Links inside delivered `spec.md`/`test-spec.md` are rewritten to relative
-  `analysis/...` paths, so the feature folder works offline and in merge
+  `solution-design/...` paths, so the feature folder works offline and in merge
   requests. Additionally `change.md` (analyst repo) records the delivery
   commit, and each delivered file carries `deliveredFrom:` (analyst repo
   remote + feature id + commit sha) — the provenance pin.
