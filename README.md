@@ -1,47 +1,39 @@
 # Rozszerzenia VS Code — gotowe paczki
 
 To repozytorium nie zawiera kodu. Są tu wyłącznie **gotowe paczki `.vsix`** —
-widoczne wprost na liście plików wyżej i odświeżane po każdej zmianie
-w źródłach. Te same pliki wiszą przy release'ie
-[`latest-build`](../../releases/tag/latest-build); to kopie, nie dwa różne
-zestawy. Źródła są w osobnym, prywatnym repozytorium.
+widoczne wprost na liście plików wyżej i odświeżane automatycznie po każdej
+zmianie w źródłach (data ostatniego commita = data ostatniego builda).
+Źródła są w osobnym, prywatnym repozytorium.
 
 Repozytorium jest publiczne, więc pobieranie idzie zwykłym HTTPS — bez tokena
 i bez logowania.
 
-## Instalacja bez Node.js, gita i basha
+**Nie korzystaj z zakładki [Releases](../../releases).** Paczki przestały być
+doczepiane do release'u — aktualny build to lista plików tego repozytorium.
+To, co ewentualnie wisi pod Releases, to nieaktualne resztki starego układu.
 
-Na maszynie, która ma tylko Windows i VS Code:
+## Instalacja na maszynie bez dostępu do sieci dla skryptów
 
-1. Pobierz **[`install-extensions.cmd`](install-extensions.cmd)** — leży wyżej,
-   na liście plików tego repozytorium. Kliknij go, potem przycisk pobierania
-   (albo *Raw*), i zapisz gdziekolwiek. Kopia repozytorium nie jest potrzebna.
-2. Uruchom go (dwuklik albo z wiersza poleceń).
+Na maszynie, na której sieć działa tylko w przeglądarce (firmowe proxy z PAC,
+którego `curl` nie przejdzie):
 
-Ten sam plik jest doczepiony do
-[release'u](../../releases/download/latest-build/install-extensions.cmd) —
-obie kopie trzyma w zgodzie ten sam build, więc obojętne, skąd go weźmiesz.
+1. Pobierz przeglądarką **[`all-extensions.zip`](all-extensions.zip)** — kliknij
+   plik na liście wyżej, potem przycisk **Download raw file**. W środku są
+   wszystkie `.vsix` oraz instalator.
+2. Rozpakuj i w terminalu VS Code uruchom skrypt z rozpakowanego katalogu:
 
-To zwykły plik wsadowy: **bez PowerShella**, bez basha, bez interpretera do
-doinstalowania. Wywołuje wyłącznie `curl.exe` (część Windowsa od wersji 1803)
-oraz `code.cmd` z VS Code. Czyta z release'u listę wersji, porównuje ją z tym,
-co już jest w edytorze, i pobiera tylko to, czego brakuje albo co jest
-nieaktualne.
-
-```bat
-install-extensions.cmd                  :: wszystko, co nieaktualne
-install-extensions.cmd api-designer     :: tylko wskazane rozszerzenia
-install-extensions.cmd /list            :: pokaż, co by się zmieniło
-install-extensions.cmd /force           :: zainstaluj także to, co aktualne
+```bash
+bash build-and-install.sh --local       # instaluje .vsix leżące obok skryptu
 ```
 
-Po instalacji przeładuj okno VS Code (**Developer: Reload Window**).
+Skrypt nie wykona ani jednego połączenia sieciowego i pominie to, co w edytorze
+jest już aktualne.
 
-## Instalacja na maszynie z bashem
+## Instalacja na maszynie z działającą siecią
 
-Na macOS, Linuksie albo Windowsie z Git Bashem to samo robi
+Na macOS, Linuksie albo Windowsie z Git Bashem wystarczy sam
 **[`build-and-install.sh`](build-and-install.sh)** — też leży na liście plików
-wyżej i też nie potrzebuje kopii repozytorium:
+wyżej i nie potrzebuje kopii repozytorium:
 
 ```bash
 ./build-and-install.sh                  # wszystko, co nieaktualne
@@ -50,22 +42,27 @@ FORCE=1 ./build-and-install.sh          # zainstaluj także to, co aktualne
 ```
 
 Potrzebuje `curl` (albo `wget`) i CLI VS Code — nie potrzebuje Node.js ani npm.
-Opisany w jego pomocy tryb `--build` **tutaj nie zadziała**: buduje ze źródeł,
-a w tym repozytorium źródeł nie ma.
+Listę wersji i paczki pobiera z listy plików tego repozytorium
+(`raw.githubusercontent.com`). Opisany w jego pomocy tryb `--build` **tutaj nie
+zadziała**: buduje ze źródeł, a w tym repozytorium źródeł nie ma.
+
+Po instalacji przeładuj okno VS Code (**Developer: Reload Window**).
 
 ## Instalacja ręczna
 
-Pojedynczą paczkę można pobrać z release'u i zainstalować przez
-**Extensions → `…` → Install from VSIX…**, albo:
+Pojedynczą paczkę można pobrać z listy plików wyżej (**Download raw file**)
+i zainstalować przez **Extensions → `…` → Install from VSIX…**, albo:
 
 ```bash
 code --install-extension api-designer.vsix
 ```
 
-## Co jest w release'ie
+## Co jest w repozytorium
 
 | Plik | Zawartość |
 |---|---|
 | `<nazwa>.vsix` | paczka rozszerzenia, **bez numeru wersji w nazwie** — dzięki temu adres do pobrania jest stały |
 | `versions.txt` | wersje w formacie `katalog\|id\|wersja\|plik` |
-| `install-extensions.cmd` | instalator dla Windowsa |
+| `all-extensions.zip` | wszystkie `.vsix` + `build-and-install.sh`, do instalacji bez sieci (`--local`) |
+| `build-and-install.sh` | instalator (bash) |
+| `skills/`, `skills.zip` | skille agentowe jadące razem z rozszerzeniami |
