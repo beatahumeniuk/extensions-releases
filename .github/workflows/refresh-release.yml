@@ -74,10 +74,72 @@ jobs:
           # date honest. The download URLs survive recreation: they are
           # addressed by tag, and the tag is recreated with the release.
           # Old assets cannot linger either — the new release starts empty.
-          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release delete "$RELEASE_TAG" --yes --cleanup-tag
+          #
+          # The order matters: the replacement is fully staged as a draft
+          # (all assets uploaded) BEFORE the old release goes away, so the
+          # public page is without a release for seconds, not for the whole
+          # upload — the owner once caught the gap mid-download. The delete
+          # is also verified by reading back instead of trusting the call's
+          # exit code: a transient 502 once deleted the release server-side
+          # yet failed the step, leaving no release at all.
+          # The Releases API returns transient 5xx often enough to have
+          # broken this twice in one afternoon (a 502 on delete, a 503 on
+          # create), so every mutating call below is retried with a pause.
+          api="repos/$GITHUB_REPOSITORY/releases"
+
+          created=""
+          for attempt in 1 2 3 4; do
+            # A draft left behind by an interrupted run or a failed attempt
+            # would pile up forever — sweep ours before each try.
+            for id in $(gh api "$api?per_page=100" --jq ".[] | select(.draft and .tag_name==\"$RELEASE_TAG\") | .id" 2>/dev/null); do
+              gh api -X DELETE "$api/$id" >/dev/null 2>&1 || true
+            done
+            if gh release create "$RELEASE_TAG" staged/* --draft --target "$GITHUB_SHA" \
+                 --title "Latest build" --notes-file "$RUNNER_TEMP/release-notes.md"; then
+              created=yes
+              break
+            fi
+            sleep 10
+          done
+          if [[ -z "$created" ]]; then
+            echo "szkic release'u nie powstal mimo ponowien" >&2
+            exit 1
           fi
-          gh release create "$RELEASE_TAG" staged/* \
-            --target "$GITHUB_SHA" \
-            --title "Latest build" --notes-file "$RUNNER_TEMP/release-notes.md"
+          draft_id="$(gh api "$api?per_page=100" --jq "[.[] | select(.draft and .tag_name==\"$RELEASE_TAG\")][0].id")"
+          if [[ -z "$draft_id" || "$draft_id" == "null" ]]; then
+            echo "szkic release'u nie powstal" >&2
+            exit 1
+          fi
+
+          old_id="$(gh api "$api/tags/$RELEASE_TAG" --jq .id 2>/dev/null || true)"
+          if [[ -n "$old_id" ]]; then
+            deleted=""
+            for attempt in 1 2 3; do
+              gh api -X DELETE "$api/$old_id" >/dev/null 2>&1 || true
+              if ! gh api "$api/$old_id" >/dev/null 2>&1; then
+                deleted=yes
+                break
+              fi
+              sleep 5
+            done
+            if [[ -z "$deleted" ]]; then
+              echo "nie udalo sie usunac starego release'u ($old_id)" >&2
+              exit 1
+            fi
+          fi
+          gh api -X DELETE "repos/$GITHUB_REPOSITORY/git/refs/tags/$RELEASE_TAG" >/dev/null 2>&1 || true
+
+          published=""
+          for attempt in 1 2 3 4; do
+            if gh api -X PATCH "$api/$draft_id" -F draft=false \
+                 -f tag_name="$RELEASE_TAG" -f target_commitish="$GITHUB_SHA" >/dev/null; then
+              published=yes
+              break
+            fi
+            sleep 10
+          done
+          if [[ -z "$published" ]]; then
+            echo "publikacja szkicu nie powiodla sie mimo ponowien" >&2
+            exit 1
+          fi
           echo "Release $RELEASE_TAG odswiezony"
