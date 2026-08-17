@@ -32,7 +32,7 @@ Artifacts are discovered **by their frontmatter `type:`, scanning `solution-desi
 | `type:` | Gdzie leży |
 |---|---|
 | `view-design` | `solution-design/ui/<widok>/<widok>.md` (indeks; sekcje w `sections/*.md` jako `view-design-part`) |
-| `api-design` | `solution-design/api/<ścieżka>/api.md` (indeks; części przepływu w `parts/*.md` jako `api-design-part`) |
+| `api-design` | `solution-design/api/<ścieżka>/api.md` (indeks; kroki przepływu w `parts/*.md`, a `request.md` / `responses.md` / `open-questions.md` obok indeksu — wszystkie jako `api-design-part`) |
 | `contract` | `solution-design/api/contracts/<nazwa>.md` |
 | `field-mapping` | `solution-design/api/<ścieżka>/<cel>.mapping.md` |
 | `value-dictionary` | `solution-design/dictionary/<nazwa>.md` |
@@ -89,7 +89,7 @@ Run these checks on the confirmed set; each failure becomes an open question (`B
 1. **Endpoint coverage** — every endpoint named in a view design (`sections/endpoints.md`, and the section files that map onto it) has a contract in the set that documents it. Missing → Q with `Block: yes` for endpoints used by actions, `no` for display-only.
 2. **Mapping linkage** — every mapping's target schema is used by a contract or view in the set; orphan mappings are surfaced (include? drop?).
 3. **Freshness** — for every artifact compare frontmatter `generated:` with the last-modified date of its `source:` (git/filesystem, when resolvable). Source newer → mark `stale` in the `change.md` artifact table and add a "regenerate with <generator>" Q. **Judge freshness at the index only.** A part is rewritten solely when its own content changed, so an untouched section legitimately carries an older `generated:` than the index — comparing part dates against each other would report a whole shelf of false staleness.
-4. **Open issues import** — collect every "Kwestie otwarte" row from view designs (`sections/open-questions.md`) **and from flow designs** (`parts/open-questions.md`), plus every `## Braki` entry from mappings; they become `Q-NN` entries verbatim. Both designs use the same five statuses, so filter them the same way: `Do uzupełnienia` / `Do ustalenia` / `Czeka na dane` are still open, `Nie dotyczy` / `Rozwiązane` are not and do not become questions.
+4. **Open issues import** — collect every "Kwestie otwarte" row from view designs (`sections/open-questions.md`) **and from flow designs** (`open-questions.md` next to `api.md` — a flow's `parts/` holds only its steps), plus every `## Braki` entry from mappings; they become `Q-NN` entries verbatim. Both designs use the same five statuses, so filter them the same way: `Do uzupełnienia` / `Do ustalenia` / `Czeka na dane` are still open, `Nie dotyczy` / `Rozwiązane` are not and do not become questions.
 5. **Completeness of the set** — a view whose actions call an endpoint with no request/response samples, a contract in the set referenced by nothing — surface, ask.
 6. **Mockup link** — every view in scope carries a `mockup:` frontmatter key. Missing → collect the Figma link in the interview (the mockup always exists); it lands in the `change.md` artifact table, never as an open question.
 7. **Parts resolve** — every link in an index points at a file that exists, and every `-part` file in the package is linked by its index. A missing target means the design was hand-edited or half-copied; a file nothing links is a leftover a reader would trust by mistake. Either way: Q with `Block: no`, and a "regenerate with <generator>" recommendation — never patch the index by hand.

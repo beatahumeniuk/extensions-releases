@@ -87,10 +87,12 @@ H1 is always the document title.
   different H1; detection goes by the shape of the document, not by the type
   it declares, so they are still recognised on read.
   **Dokument jest podzielony na pliki** (patrz „Split documents"): pod
-  `## Przebieg` diagram i spis tego, co się kiedy dzieje, a treść kroków,
-  odpowiedzi i kwestii otwartych w `parts/`. Sekcja „Kwestie
-  otwarte" to tabela `| Czego dotyczy | Krok | Status | Komentarz |` z tym
-  samym zestawem statusów co w projekcie widoku.
+  `## Przebieg` diagram i linki do kroków, a treść kroków w `parts/` — tylko
+  ich. Kontrakt (`request.md`, `responses.md`) i kwestie otwarte
+  (`open-questions.md`) leżą obok indeksu i są w nim też wydrukowane
+  w całości. Sekcja „Kwestie otwarte" to tabela
+  `| Czego dotyczy | Krok | Status | Komentarz |` z tym samym zestawem
+  statusów co w projekcie widoku.
 - **db-playground-schema** — export of DB Playground: summary table, one section per
   table/collection (columns with types, constraints, indexes), relations
   table + Mermaid ER diagram for SQL sources. Extra frontmatter:
@@ -109,13 +111,15 @@ the canonical name, or importers and `/handoff-package` will not see it.
 part**. The other types are single files.
 
 **The index** carries the artifact's frontmatter (`type`, `generator`,
-`generated`, `source`, counters, `managed`), the H1, and a list of links — no
-content of its own:
+`generated`, `source`, counters, `managed`), the H1, and the links. A view
+index has no content of its own — every section is a link. A flow index is
+read end to end: it prints the contract and the open questions in full and
+links only the steps, because they are the long part.
 
 | Typ | Katalog | Kształt spisu |
 |---|---|---|
 | `view-design` | `sections/` | `N. [tytuł](sections/plik.md)` pod nagłówkiem spisu treści, N = pozycja w spisie |
-| `api-design` | `parts/` | `- [tytuł](parts/plik.md)` pod `## Przebieg`, po diagramie Mermaid |
+| `api-design` | `parts/` | `- [tytuł](parts/plik.md)` pod `## Przebieg`, po diagramie Mermaid — linkowane są wyłącznie kroki |
 
 **A part** is one block of the document — its own `## ` heading included —
 under a short frontmatter. For a view that block is **one section of the view**,
@@ -144,11 +148,14 @@ subject, not an aspect. Two files are not sections and have fixed names:
 because one endpoint serves several sections) and `open-questions.md` (one
 list, with each component name linking into the section that describes it).
 Deliberately without an ordinal in the name, so a section that empties out does
-not rename the ones that stay. A flow's parts are `request.md`,
-`step-NN-<type>.md` — the ordinal because order is the content there, the step
-type because file names are English everywhere in the tree and a step's title
-is written in the analyst's own language — `responses.md` and
-`open-questions.md`, which comes last, after everything the design does know.
+not rename the ones that stay. A flow's `parts/` holds `step-NN-<type>.md` and
+nothing else — the ordinal because order is the content there, the step type
+because file names are English everywhere in the tree and a step's title is
+written in the analyst's own language. `request.md`, `responses.md` and
+`open-questions.md` have fixed names and sit **next to the index**, not in
+`parts/` — they are not steps of the process — still typed `api-design-part`,
+with the open questions last in reading order, after everything the design
+does know.
 Client libraries are not a part: the pom fragment lives in
 `solution-design/external/<klient>/dependency.xml` and the step that calls the service
 links to it.

@@ -112,7 +112,7 @@ generated: <YYYY-MM-DD>
 
 IDs `Q-NN`, append-only within a run. Every open issue imported from a view
 design (`sections/open-questions.md`), from a
-flow design (`parts/open-questions.md`), every `## Braki` entry from a mapping,
+flow design (`open-questions.md` next to `api.md`), every `## Braki` entry from a mapping,
 and every cross-check failure lands here. Rozwiązane i „nie dotyczy" nie są
 kwestiami otwartymi i nie trafiają tu wcale. `Źródło` links the file the issue was
 read from — the section, not the index. **Never resolved by the skill** —
