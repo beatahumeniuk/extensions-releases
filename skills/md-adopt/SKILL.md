@@ -80,6 +80,12 @@ Match on what the format guarantees:
 Frontmatter, jeśli jest, wygrywa z heurystyką — `type` zapisany w pliku jest
 deklaracją autora, nie zgadywanką.
 
+**Detect cheaply.** Frontmatter first — `sed -n '2,/^---$/p' <plik>` — and
+when it carries `type`, that file is classified. Only then probe the body
+with `rg`, one marker per row of the table above (`rg -c` is enough: the
+count says whether the shape is there). Read a file in full only once it is
+a candidate you are about to write a proposal for.
+
 **Projekt wyeksportowany przez rozszerzenie jest podzielony na pliki.** Indeks
 (`<widok>.md`, `api.md`) niesie tożsamość, frontmatter i spis treści; sekcje
 i kroki leżą obok, w `sections/` i `parts/`. Ma to dwa skutki przy
@@ -127,10 +133,12 @@ markdown — a docs review flags embedded code, and pasted XML drifts.
 
 **Podział na indeks i części — propozycja, nigdy domyślnie.** Plik
 sklasyfikowany jako `view-design` albo `api-design`, który ma kanoniczne
-bloki `##`, można rozłożyć tak, jak robi to eksport: indeks z frontmatterem,
-tytułem i spisem linków, a każdy blok jako osobny plik w `sections/`
-(odpowiednio `parts/`). Zaproponuj to razem z resztą zmian, jednym zdaniem
-i listą plików, które powstaną. Zasady, gdy użytkownik się zgodzi:
+bloki `##`, można rozłożyć tak, jak robi to eksport. Zanim to zaproponujesz,
+przeczytaj `references/split-documents.md` — pełny kontrakt podziału (kształt
+indeksu, frontmatter części, nazwy plików); większość adopcji go nie
+potrzebuje, więc nie czytaj go wcześniej. Zaproponuj podział razem z resztą
+zmian, jednym zdaniem i listą plików, które powstaną. Zasady, gdy użytkownik
+się zgodzi:
 
 - **treść bloku jedzie bez zmian**, razem ze swoim nagłówkiem `## N.`;
   podział przenosi tekst między plikami, nie przepisuje go;
@@ -173,6 +181,16 @@ any recommended re-exports. For a document that was split: the index and how
 many parts it now has, plus every block that stayed in the index because no
 canonical name fit it. Suggest `/docs-review solution-design/` as the natural next
 check — but do not run it.
+
+## Token budget
+
+- The candidate scan is a file list, not a reading list: frontmatter via
+  `sed -n '2,/^---$/p'`, shape via `rg` markers — a file is read in full only
+  when you are writing its proposal.
+- `references/split-documents.md` is read only when a split is actually being
+  proposed.
+- The ~10-file batches (Edge cases) bound the window too: close each batch
+  with its report before opening the next.
 
 ## Edge cases
 

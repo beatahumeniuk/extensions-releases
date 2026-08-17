@@ -40,18 +40,11 @@ Artifacts are discovered **by their frontmatter `type:`, scanning `solution-desi
 | `confluence-page` | gdzie ustawiono `confluenceToMd.downloadFolder` (np. `solution-design/confluence/<slug>.md`); domyślnie strona ląduje tam, gdzie pracował analityk — poza `solution-design/` skanowanie jej nie znajdzie |
 
 **A design is an index plus its parts, and the artifact is the whole.** The
-file carrying `view-design` / `api-design` is the index: identity,
-frontmatter, counters and a list of links. The `-part` files it links —
-`sections/*.md` next to a view, `parts/*.md` next to a flow — are that same
-artifact's sections, and they are where the content is. So:
-
-- **count and link the index**, never a part; a part listed as an artifact of
-  its own turns one view design into seven rows and seven freshness checks;
-- **read the parts for evidence** — endpoints, actions, open issues and
-  validation findings are in the section files, and an index read alone looks
-  like an empty design;
-- a `-part` whose `parent:` resolves to nothing is an **orphan** (its index was
-  deleted or moved): report it, do not promote it.
+file carrying `view-design` / `api-design` is the index; the `-part` files it
+links are where the content is. **Count and link the index, never a part; read
+the parts for evidence** — an index read alone looks like an empty design. A
+`-part` whose `parent:` resolves to nothing is an **orphan** (its index was
+deleted or moved): report it, do not promote it.
 
 A file without recognizable frontmatter is listed but never auto-included.
 `docs/` is not scanned: it is the hand-written deliverable, and a handoff is
@@ -72,7 +65,15 @@ assembled from evidence, not from another summary of it.
 
 ### Step 1 — Inventory
 
-List every markdown file under `solution-design/` with frontmatter `type`, `source`, `generated`, plus every Maven fragment under `solution-design/external/<klient>/dependency.xml` (provenance from its XML comment header). Present a table grouped by type. Note files with missing/foreign frontmatter as excluded.
+List every markdown file under `solution-design/` with frontmatter `type`, `source`, `generated`, plus every Maven fragment under `solution-design/external/<klient>/dependency.xml` (provenance from its XML comment header). **Read frontmatter blocks only — never a file's body at this step:**
+
+```bash
+rg --files solution-design -g '*.md' | while read -r f; do
+  printf '== %s\n' "$f"; sed -n '2,/^---$/p' "$f"
+done
+```
+
+Present a table grouped by type. Note files with missing/foreign frontmatter as excluded.
 
 **One row per design, not per file.** A `type` ending in `-part` is not an artifact: fold it into its `parent:` and, if it helps the user pick scope, say how many parts the index has (`login.md (6 sekcji)`). Orphan parts get their own line under excluded, with the reason.
 
@@ -80,11 +81,11 @@ List every markdown file under `solution-design/` with frontmatter `type`, `sour
 
 Propose the artifact set for the feature: start from the view(s) matching `$ARGUMENTS` hints or the feature id, then pull in **referenced** artifacts — contracts whose endpoints appear in the views' "Dane"/"Akcje" sections, mappings whose `source:` points at a contract in the set or whose target schema name appears in a contract's `## Model danych`, Confluence pages the user points at, and dependency fragments whose header `feature:` matches the feature id or which a scoped artifact links to. Show the proposed set with a one-line reason per artifact and **Ask the user** to confirm/adjust. If nothing matches the feature id, ask instead of guessing.
 
-The references live in the section files, so follow the index links rather than grepping the index — and follow them rather than guessing file names, because a view's section files are numbered and the numbers shift when a section is added — the index lists titles and links, and nothing else. Scoping a design in always scopes in all of its parts; they are not selectable separately.
+The references live in the section files, so follow the index links rather than grepping the index — and follow them rather than guessing file names (section numbers shift). Scoping a design in always scopes in all of its parts; they are not selectable separately.
 
 ### Step 3 — Cross-check (self-review before writing)
 
-Run these checks on the confirmed set; each failure becomes an open question (`Block` per severity) — none of them silently blocks the package except the abort condition:
+Run these checks on the confirmed set; each failure becomes an open question (`Block` per severity) — none of them silently blocks the package except the abort condition. Each check names the files it needs — open only those; the inventory already gave you the map:
 
 1. **Endpoint coverage** — every endpoint named in a view design (`sections/endpoints.md`, and the section files that map onto it) has a contract in the set that documents it. Missing → Q with `Block: yes` for endpoints used by actions, `no` for display-only.
 2. **Mapping linkage** — every mapping's target schema is used by a contract or view in the set; orphan mappings are surfaced (include? drop?).
@@ -122,9 +123,9 @@ Verify, and fix before reporting: every repo-relative link in the change folder 
 ### Step 7 — Optional delivery to the developer's repo
 
 Only when the user provided a delivery target (a path to the developer
-repo, in `$ARGUMENTS` or when asked for): write
-`docs/features/<feature-id>/` **in that repo** per the "Delivery copy" section
-of the schema — `spec.md` and `test-spec.md` (links rewritten to relative
+repo, in `$ARGUMENTS` or when asked for): **read
+`references/delivery-copy.md` now** (only this step needs it) and write
+`docs/features/<feature-id>/` **in that repo** per that contract — `spec.md` and `test-spec.md` (links rewritten to relative
 `solution-design/...` paths) plus an `solution-design/` folder holding copies of every scoped
 artifact from our `solution-design/` tree, each stamped with `deliveredFrom:` (feature id + commit sha when the
 scoped artifacts are committed, else the delivery date + a warning in the
@@ -138,6 +139,21 @@ given → skip this step silently.
 ### Step 8 — Hand off and STOP
 
 Report: change folder path, artifact count, blockers count, freshness summary, the delivery path when Step 7 ran, and a note that the folders are ready to commit (committing is the user's call). Print the recipient prompt from `change.md` → `## Start` as the final code block, so the user can hand it to the recipient's agent. **Stop.** Do not propose running other skills unless asked.
+
+## Token budget
+
+The tree is bigger than the window; read at the depth of the question.
+
+- **Inventory = frontmatter only** — the `sed` loop above; a design's body is
+  not evidence at that step.
+- **Cross-checks open the files they name**, nothing else: endpoints from
+  `sections/endpoints.md`, open issues from the two `open-questions.md` files
+  and `## Braki`, freshness from the frontmatter you already hold. `rg -o`
+  returns the value, not the file.
+- **Full parts are read only for artifacts in the confirmed scope**, and only
+  when writing `spec.md` / `test-spec.md` needs their content (Step 5). Nothing
+  outside the scope is opened past its frontmatter.
+- `references/delivery-copy.md` is read only when Step 7 actually runs.
 
 ## Edge cases
 
