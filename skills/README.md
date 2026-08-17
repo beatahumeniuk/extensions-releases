@@ -67,6 +67,15 @@ na format harnessu. Domyślne `~/.agents/skills` obsługuje trzy harnessy naraz,
 więc osobna pozycja przydaje się tylko wtedy, gdy chcesz mieć kopię dokładnie
 tam, gdzie dane narzędzie szuka w pierwszej kolejności.
 
+Drugie wspólne ustawienie — **`agentSkills.harness`** — mówi, **który agent
+wykonuje skille**, gdy uruchamia je rozszerzenie (np. znaczek „Opisz flow
+z kodu" nad endpointem w Logic Design). Wybór z listy, bez wpisywania komend:
+`chat` (czat agenta w oknie, domyślne) · `claude-code` · `copilot-cli`
+(agent w zintegrowanym terminalu, otwartym w korzeniu projektu, więc widzi
+całe drzewo) · `clipboard` (samo skopiowanie polecenia) · `custom` (własne
+polecenie z `agentSkills.command`, `{prompt}` podstawiane w cudzysłowie) —
+harness spoza listy załatwia właśnie `custom`.
+
 ## Instalacja skilli poprzecznych (raz, na swojej maszynie)
 
 Skopiuj foldery do **`~/.agents/skills/`** — osobistej lokalizacji standardu,
