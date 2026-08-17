@@ -67,20 +67,17 @@ jobs:
             echo "obok \`.vsix\`, pomijając to, co już aktualne. Pojedynczą paczkę można też"
             echo "zainstalować ręcznie (**Extensions → … → Install from VSIX…**)."
           } > "$RUNNER_TEMP/release-notes.md"
+          # The date in the release header is its publish date — replacing
+          # assets does not touch it, so an updated release would keep
+          # looking N hours old and the owner would read that as "no new
+          # packages". Recreating the release on every refresh keeps that
+          # date honest. The download URLs survive recreation: they are
+          # addressed by tag, and the tag is recreated with the release.
+          # Old assets cannot linger either — the new release starts empty.
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            # An asset that is no longer produced disappears from the release
-            # for the same reason it disappears from the file list: left
-            # behind, it would sit there forever looking current.
-            for asset in $(gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name'); do
-              if [[ ! -e "staged/$asset" ]]; then
-                gh release delete-asset "$RELEASE_TAG" "$asset" --yes
-              fi
-            done
-            gh release upload "$RELEASE_TAG" staged/* --clobber
-            gh release edit "$RELEASE_TAG" \
-              --title "Latest build" --notes-file "$RUNNER_TEMP/release-notes.md"
-          else
-            gh release create "$RELEASE_TAG" staged/* \
-              --title "Latest build" --notes-file "$RUNNER_TEMP/release-notes.md"
+            gh release delete "$RELEASE_TAG" --yes --cleanup-tag
           fi
+          gh release create "$RELEASE_TAG" staged/* \
+            --target "$GITHUB_SHA" \
+            --title "Latest build" --notes-file "$RUNNER_TEMP/release-notes.md"
           echo "Release $RELEASE_TAG odswiezony"
