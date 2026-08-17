@@ -49,32 +49,23 @@ Tutaj zostają skille **poprzeczne**: `handoff-package` czyta projekty ze
 wszystkich rozszerzeń naraz, `md-adopt` normalizuje całe drzewo `solution-design/` —
 żadnego z nich nie da się przypisać do jednego rozszerzenia.
 
-Rozszerzenia zapisują skill tam, gdzie wskazuje **`agentSkills.target`** —
-jedno ustawienie wspólne dla wszystkich rozszerzeń, więc harness wybierasz raz:
+Skille rozszerzeń mają **jedno wspólne ustawienie**: **`agentSkills.harness`**
+mówi, **który agent wykonuje skille**, gdy uruchamia je rozszerzenie (np.
+znaczek „Opisz flow z kodu" nad endpointem w Logic Design), i **dokąd
+instaluje się `SKILL.md`** — katalog wynika z harnessu, niczego więcej się
+nie ustawia:
 
-| Wartość | Katalog |
-|---|---|
-| `agents` (domyślne) | `~/.agents/skills` — lokalizacja standardu, czytana też przez Cursora i Copilota |
-| `claude-code` | `~/.claude/skills` |
-| `cursor` | `~/.cursor/skills` |
-| `copilot` | `~/.copilot/skills` |
-| `workspace` | `.agents/skills` w projekcie — jedzie z repozytorium, dla zespołu |
-| `workspace-github` | `.github/skills` w projekcie |
-| `custom` | ścieżka z `agentSkills.path` |
+| Harness | Co robi znaczek/komenda | Katalog skilli |
+|---|---|---|
+| `chat` (domyślne) | czat agenta w oknie VS Code; brak czatu → schowek | `~/.agents/skills` — lokalizacja standardu, czytana też przez Cursora i Copilota |
+| `claude-code` | `claude "…"` w zintegrowanym terminalu, w korzeniu projektu | `~/.claude/skills` |
+| `copilot-cli` | `copilot -p "…"` w zintegrowanym terminalu, w korzeniu projektu | `~/.copilot/skills` |
+| `clipboard` | samo skopiowanie polecenia — wklejasz dowolnemu agentowi | `~/.agents/skills` |
+| `custom` | własne polecenie terminalowe — rozszerzenie pyta o nie przy pierwszym użyciu i pamięta (`{prompt}` podstawiane w cudzysłowie) | `~/.agents/skills` |
 
-Wybierasz **katalog, nie format**: `SKILL.md` idzie bajt w bajt, bez konwersji
-na format harnessu. Domyślne `~/.agents/skills` obsługuje trzy harnessy naraz,
-więc osobna pozycja przydaje się tylko wtedy, gdy chcesz mieć kopię dokładnie
-tam, gdzie dane narzędzie szuka w pierwszej kolejności.
-
-Drugie wspólne ustawienie — **`agentSkills.harness`** — mówi, **który agent
-wykonuje skille**, gdy uruchamia je rozszerzenie (np. znaczek „Opisz flow
-z kodu" nad endpointem w Logic Design). Wybór z listy, bez wpisywania komend:
-`chat` (czat agenta w oknie, domyślne) · `claude-code` · `copilot-cli`
-(agent w zintegrowanym terminalu, otwartym w korzeniu projektu, więc widzi
-całe drzewo) · `clipboard` (samo skopiowanie polecenia) · `custom` (własne
-polecenie z `agentSkills.command`, `{prompt}` podstawiane w cudzysłowie) —
-harness spoza listy załatwia właśnie `custom`.
+Instalacja to **katalog, nie format**: `SKILL.md` idzie bajt w bajt, bez
+konwersji na format harnessu. Agenta, który nie czyta skilli sam z siebie,
+wywołujesz wskazując mu ten plik.
 
 ## Instalacja skilli poprzecznych (raz, na swojej maszynie)
 
