@@ -105,9 +105,19 @@ jobs:
             echo "szkic release'u nie powstal mimo ponowien" >&2
             exit 1
           fi
-          draft_id="$(gh api "$api?per_page=100" --jq "[.[] | select(.draft and .tag_name==\"$RELEASE_TAG\")][0].id")"
+          # The freshly created draft can take a moment to appear in the
+          # list (it once vanished for the read two seconds after a
+          # successful create, mid-incident) — so the lookup retries too.
+          draft_id=""
+          for attempt in 1 2 3 4 5 6; do
+            draft_id="$(gh api "$api?per_page=100" --jq "[.[] | select(.draft and .tag_name==\"$RELEASE_TAG\")][0].id" 2>/dev/null || true)"
+            if [[ -n "$draft_id" && "$draft_id" != "null" ]]; then
+              break
+            fi
+            sleep 5
+          done
           if [[ -z "$draft_id" || "$draft_id" == "null" ]]; then
-            echo "szkic release'u nie powstal" >&2
+            echo "szkic release'u powstal, ale nie widac go na liscie mimo ponowien" >&2
             exit 1
           fi
 
