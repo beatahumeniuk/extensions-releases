@@ -1,6 +1,6 @@
 api-designer|beatahumeniuk.api-designer|0.40.0|api-designer.vsix
 db-playground|beatahumeniuk.db-playground|0.7.0|db-playground.vsix
 jira-tasks|beatahumeniuk.jira-tasks|0.4.0|jira-tasks.vsix
-logic-spec|beatahumeniuk.logic-spec|0.18.0|logic-spec.vsix
+logic-spec|beatahumeniuk.logic-spec|0.19.0|logic-spec.vsix
 schema-mapper|beatahumeniuk.schema-mapper|0.6.0|schema-mapper.vsix
-spec-skills|beatahumeniuk.spec-skills|0.6.0|spec-skills.vsix
+spec-skills|beatahumeniuk.spec-skills|0.7.0|spec-skills.vsix
