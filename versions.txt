@@ -3,5 +3,5 @@ db-playground|beatahumeniuk.db-playground|0.7.0|db-playground.vsix
 jira-tasks|beatahumeniuk.jira-tasks|0.4.0|jira-tasks.vsix
 logic-spec|beatahumeniuk.logic-spec|0.20.1|logic-spec.vsix
 schema-mapper|beatahumeniuk.schema-mapper|0.6.0|schema-mapper.vsix
-spec-skills|beatahumeniuk.spec-skills|0.10.0|spec-skills.vsix
+spec-skills|beatahumeniuk.spec-skills|0.11.0|spec-skills.vsix
 ui-spec|beatahumeniuk.ui-spec|0.25.0|ui-spec.vsix
