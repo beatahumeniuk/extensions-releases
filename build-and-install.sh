@@ -37,10 +37,11 @@ BRANCH="${BRANCH:-main}"
 
 usage() {
   cat <<'EOF'
-build-and-install.sh [--build|--local] [nazwa ...]
+build-and-install.sh [--download|--build|--local] [nazwa ...]
 
-Bez opcji: pobiera gotowe paczki .vsix zbudowane przez CI z ostatniego
-merge do main i instaluje je w VS Code. Nie wymaga Node.js ani npm.
+Bez opcji (albo z --download): pobiera gotowe paczki .vsix zbudowane przez
+CI z ostatniego merge do main i instaluje je w VS Code. Nie wymaga Node.js
+ani npm.
 
 Z --local: nic nie pobiera. Instaluje paczki .vsix lezace w tym samym
 katalogu co skrypt (albo w LOCAL_DIR). Dla maszyny bez dostepu do sieci.
@@ -221,6 +222,16 @@ find_local_dir() {
 install_local() {
   local dir rc=0 vsix name wanted a
   local OKL=() FAILL=()
+
+  # Katalog wskazany wprost ma byc uzyty albo zglosic blad — po cichu
+  # przejsc do kaskady wolno tylko wtedy, gdy nikt niczego nie wskazal.
+  if [[ -n "${LOCAL_DIR:-}" ]] && ! ls "${LOCAL_DIR}"/*.vsix >/dev/null 2>&1; then
+    echo "✗ W podanym LOCAL_DIR nie ma żadnego pliku .vsix:" >&2
+    echo "  $LOCAL_DIR" >&2
+    echo "  Popraw ścieżkę albo usuń LOCAL_DIR, żeby skrypt poszukał sam" >&2
+    echo "  (katalog skryptu, katalog bieżący, Pobrane)." >&2
+    return 1
+  fi
 
   dir="$(find_local_dir)" || {
     echo "✗ Nie znalazłem żadnego pliku .vsix." >&2
