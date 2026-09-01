@@ -1,4 +1,4 @@
-api-designer|beatahumeniuk.api-designer|0.47.0|api-designer.vsix
+api-designer|beatahumeniuk.api-designer|0.48.0|api-designer.vsix
 db-playground|beatahumeniuk.db-playground|0.13.0|db-playground.vsix
 jira-tasks|beatahumeniuk.jira-tasks|0.9.0|jira-tasks.vsix
 logic-spec|beatahumeniuk.logic-spec|0.34.0|logic-spec.vsix
