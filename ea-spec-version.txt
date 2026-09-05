@@ -1,1 +1,1 @@
-ea-spec|0.1.0|ea-spec.zip|sha256:1c2ba0ead6a3a4cd16b23afddf9f77e3d53c06cd2382da5211e989c7b6fefa97
+ea-spec|0.1.0|ea-spec.zip|sha256:54129b74ff2ee5fc12557197d05c76325ab6edbc2992a84d0de9ddeb6c210efa
