@@ -46,7 +46,7 @@ jobs:
           fi
           mkdir -p staged
           cp versions.txt staged/
-          for f in *.vsix all-extensions.zip build-and-install.sh skills.zip ea-spec.zip ea-spec-version.txt; do
+          for f in *.vsix all-extensions.zip build-and-install.sh skills.zip ea-spec.zip; do
             [[ -e "$f" ]] && cp "$f" staged/
           done
           built_at="$(TZ=UTC git log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M' HEAD) UTC"
@@ -62,10 +62,11 @@ jobs:
               echo "| $id | $ver | [\`$file\`](https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/$file) |"
             done < versions.txt
             echo
+            # Dodatek do EA to sam plik: zaden opis, zadna wersja, zadna
+            # instrukcja. Zip jest zamkniety haslem, wiec adres bez hasla i
+            # tak nikomu nic nie daje.
             if [[ -e ea-spec.zip ]]; then
-              ver="$(cut -d'|' -f2 ea-spec-version.txt 2>/dev/null || echo '?')"
-              echo "**EA Spec (dodatek do Enterprise Architect):** [\`ea-spec.zip\`](https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/ea-spec.zip) — wersja $ver;"
-              echo "instalacja bez admina: rozpakuj i uruchom w Git Bash \`bash install-ea-spec.sh\` (instrukcja w paczce)."
+              echo "[\`ea-spec.zip\`](https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/ea-spec.zip)"
               echo
             fi
             echo "**Instalacja na maszynie bez sieci dla skryptów:** pobierz \`all-extensions.zip\`,"
