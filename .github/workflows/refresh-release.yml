@@ -19,6 +19,16 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Dwa workflowy w repozytorium zrodel (rozszerzenia i dodatek EA) pchaja tu
+# osobno, wiec ten moze ruszyc dwa razy w odstepie minut. Przebiegi nie moga
+# sie przeplatac: kazdy usuwa szkice tego tagu przed zalozeniem swojego, wiec
+# drugi potrafil skasowac szkic pierwszego i zostawic release jako szkic —
+# a szkicu nie widac spod publicznego adresu pobierania (404).
+# Kolejka, nie anulowanie: drugi push ma sie odlozyc na pozniej, nie przepasc.
+concurrency:
+  group: refresh-release
+  cancel-in-progress: false
+
 permissions:
   contents: write
 
