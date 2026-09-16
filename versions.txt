@@ -1,6 +1,6 @@
 db-playground|beatahumeniuk.db-playground|0.13.2|db-playground.vsix
 jira-tasks|beatahumeniuk.jira-tasks|0.9.2|jira-tasks.vsix
 logic-spec|beatahumeniuk.logic-spec|0.36.1|logic-spec.vsix
-spec-skills|beatahumeniuk.spec-skills|0.34.3|spec-skills.vsix
+spec-skills|beatahumeniuk.spec-skills|0.35.0|spec-skills.vsix
 spec-studio|beatahumeniuk.spec-studio|0.13.1|spec-studio.vsix
 ui-spec|beatahumeniuk.ui-spec|0.37.2|ui-spec.vsix
