@@ -46,7 +46,7 @@ jobs:
           fi
           mkdir -p staged
           cp versions.txt staged/
-          for f in *.vsix all-extensions.zip build-and-install.sh skills.zip ea-spec.zip; do
+          for f in *.vsix all-extensions.zip build-and-install.sh skills.zip ea-spec.zip ea-mcp.zip; do
             [[ -e "$f" ]] && cp "$f" staged/
           done
           built_at="$(TZ=UTC git log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M' HEAD) UTC"
@@ -67,6 +67,12 @@ jobs:
             # tak nikomu nic nie daje.
             if [[ -e ea-spec.zip ]]; then
               echo "[\`ea-spec.zip\`](https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/ea-spec.zip)"
+              echo
+            fi
+            # Serwer MCP do EA (ea-mcp/ w repozytorium zrodel): tak samo jeden
+            # plik, to samo haslo co ea-spec.zip.
+            if [[ -e ea-mcp.zip ]]; then
+              echo "[\`ea-mcp.zip\`](https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/ea-mcp.zip)"
               echo
             fi
             echo "**Instalacja na maszynie bez sieci dla skryptów:** pobierz \`all-extensions.zip\`,"
