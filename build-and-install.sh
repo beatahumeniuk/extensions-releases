@@ -49,6 +49,10 @@ for arg in "$@"; do
 done
 if [[ ${#ARGS[@]} -gt 0 ]]; then set -- "${ARGS[@]}"; else set --; fi
 
+# An interrupted download must not leave its temp directory behind.
+DL_TMP=""
+trap '[[ -n "$DL_TMP" && -d "$DL_TMP" ]] && rm -rf "$DL_TMP"' EXIT
+
 EDITOR_CLI="${EDITOR_CLI:-}"
 if [[ -z "$EDITOR_CLI" ]]; then
   for c in \
@@ -125,7 +129,7 @@ download_and_install() {
     installed="$("$EDITOR_CLI" --list-extensions --show-versions 2>/dev/null | tr -d '\r' || true)"
   fi
 
-  tmp="$(mktemp -d)"
+  tmp="$(mktemp -d)" ; DL_TMP="$tmp"
 
   while IFS='|' read -r name id ver asset; do
     [[ -n "${name:-}" && -n "${asset:-}" ]] || continue
