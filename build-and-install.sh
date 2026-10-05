@@ -2,14 +2,19 @@
 #
 # Installs the VS Code extension packages from this repository.
 #
-#   ./install.sh                 install everything that is out of date
-#   ./install.sh logic-spec      install only the named packages
-#   ./install.sh --local         install .vsix files sitting next to this script
-#   FORCE=1 ./install.sh         reinstall even what is already current
+# Published as build-and-install.sh (the name the documentation uses), so
+# every message below names the file by what it is actually called.
+#
+#   bash build-and-install.sh              install everything that is out of date
+#   bash build-and-install.sh logic-spec   install only the named packages
+#   bash build-and-install.sh --local      install .vsix files sitting next to this script
+#   FORCE=1 bash build-and-install.sh      reinstall even what is already current
 #
 # Needs curl (or wget) and the VS Code CLI. No Node.js, no npm.
 
 set -uo pipefail
+
+SELF="$(basename "$0")"
 
 REPO="${REPO:-beatahumeniuk/extensions-releases}"
 BRANCH="${BRANCH:-main}"
@@ -20,8 +25,8 @@ BASE_URL="${BASE_URL:-https://raw.githubusercontent.com/$REPO/$BRANCH}"
 ROOT="$(cd "$(dirname "$0")" && { pwd -W 2>/dev/null || pwd; })"
 
 usage() {
-  cat <<'EOF'
-install.sh [--download|--local] [name ...]
+  cat <<EOF
+$SELF [--download|--local] [name ...]
 
   --download   (default) fetch the packages over HTTPS and install them
   --local      install the .vsix files next to this script (or in LOCAL_DIR)
@@ -162,6 +167,13 @@ download_and_install() {
   done <<<"$manifest"
 
   rm -rf "$tmp"
+  # Names that match nothing in versions.txt would otherwise end in an empty
+  # summary and a green exit — the same report --local gives.
+  if [[ $# -gt 0 && ${#OK[@]} -eq 0 && ${#SKIPPED[@]} -eq 0 && ${#FAILED[@]} -eq 0 ]]; then
+    echo "x None of the given names is in $REPO: $*" >&2
+    echo "  Known packages: $(cut -d'|' -f1 <<<"$manifest" | tr '\n' ' ')" >&2
+    return 1
+  fi
   summary
   [[ ${#FAILED[@]} -eq 0 ]] || rc=1
   return $rc
@@ -201,7 +213,7 @@ install_local() {
   dir="$(find_local_dir)" || {
     echo "x No .vsix file found." >&2
     echo "  Looked in: this script's directory, the current directory, Downloads." >&2
-    echo "  Name one directly: LOCAL_DIR=/path bash install.sh --local" >&2
+    echo "  Name one directly: LOCAL_DIR=/path bash $SELF --local" >&2
     return 1
   }
 
