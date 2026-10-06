@@ -113,6 +113,20 @@ OK=() ; SKIPPED=() ; FAILED=()
 
 # ── Default mode: fetch the packages and install them ───────────────────────
 
+# Whether version $1 is older than $2 (x.y.z, numerically). Bash 3.2: no sort -V.
+version_lt() {
+  local a="$1" b="$2" i x y
+  local IFS=.
+  local -a pa=($a) pb=($b)
+  for i in 0 1 2 3; do
+    x="${pa[$i]:-0}"; y="${pb[$i]:-0}"
+    x="${x%%[^0-9]*}"; y="${y%%[^0-9]*}"
+    (( 10#${x:-0} < 10#${y:-0} )) && return 0
+    (( 10#${x:-0} > 10#${y:-0} )) && return 1
+  done
+  return 1
+}
+
 download_and_install() {
   local manifest installed tmp rc=0 name id ver asset have
 
@@ -120,7 +134,10 @@ download_and_install() {
   # A download can fail for reasons no script can fix. Packages already on
   # disk are still worth installing, so fall through to the local mode
   # instead of ending with nothing.
-  manifest="$(fetch_to_stdout "$BASE_URL/versions.txt")" || {
+  # A timestamp in the address gets past the raw.githubusercontent.com cache:
+  # without it a stale list came for minutes after a release and the
+  # installer downgraded the extensions (2026-10-06).
+  manifest="$(fetch_to_stdout "$BASE_URL/versions.txt?t=$(date +%s)")" || {
     echo "x Could not fetch $BASE_URL/versions.txt" >&2
     echo "  Looking for packages on disk..." >&2
     echo "" >&2
@@ -147,13 +164,20 @@ download_and_install() {
     fi
 
     have="$(grep -i "^$id@" <<<"$installed" | head -1 || true)"
+    # Never older over newer: the list may be stale (a cache) and the
+    # installed one built locally. FORCE=1 forces it.
+    if [[ -n "$have" ]] && version_lt "$ver" "${have#*@}"; then
+      echo "· $name: installed ${have#*@} is newer than $ver in the packages — skipped (FORCE=1 forces it)"
+      SKIPPED+=("$name ${have#*@}")
+      continue
+    fi
     if [[ -n "$have" ]]; then
       echo "> $name: ${have#*@} -> $ver"
     else
       echo "> $name: new, $ver"
     fi
 
-    if ! fetch_to_file "$BASE_URL/$asset" "$tmp/$asset"; then
+    if ! fetch_to_file "$BASE_URL/$asset?t=$(date +%s)" "$tmp/$asset"; then
       echo "  x download failed" >&2
       FAILED+=("$name (download)")
       continue
