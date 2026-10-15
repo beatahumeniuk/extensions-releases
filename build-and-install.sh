@@ -205,61 +205,90 @@ download_and_install() {
 
 # ── Local mode: install the .vsix files already on disk ─────────────────────
 
-# Most specific first: an explicit directory, the script's own directory, the
-# current directory, then Downloads — including the subdirectory Windows
-# creates when an archive is unpacked.
-find_local_dir() {
-  local d dl
+# Where packages may lie: an explicit directory alone, or else the script's
+# own directory, the current directory and Downloads — including the
+# subdirectories Windows creates when an archive is unpacked. One per line.
+local_dirs() {
+  local d dl seen=""
+  if [[ -n "${LOCAL_DIR:-}" ]]; then
+    echo "${LOCAL_DIR%/}"
+    return 0
+  fi
   for dl in "${USERPROFILE:-}/Downloads" "$HOME/Downloads"; do
     [[ -d "$dl" ]] && break
   done
-  for d in "${LOCAL_DIR:-}" "$ROOT" "$PWD" "$dl" "$dl"/*/; do
+  for d in "$ROOT" "$PWD" "$dl" "$dl"/*/; do
     [[ -n "$d" && -d "$d" ]] || continue
-    if ls "$d"/*.vsix >/dev/null 2>&1; then
-      echo "${d%/}"
-      return 0
-    fi
+    d="${d%/}"
+    ls "$d"/*.vsix >/dev/null 2>&1 || continue
+    case "$seen" in *"|$d|"*) continue ;; esac
+    seen="$seen|$d|"
+    echo "$d"
   done
-  return 1
 }
 
-install_local() {
-  local dir rc=0 vsix name
+# The version a .vsix carries, when unzip is at hand.
+vsix_version() {
+  command -v unzip >/dev/null 2>&1 || return 0
+  unzip -p "$1" extension/package.json 2>/dev/null | sed -n 's/^ *"version": *"\([^"]*\)".*/\1/p' | head -n 1
+}
 
-  # An explicitly named directory is used or reported — falling through to
-  # the search is only allowed when nothing was named.
+# Each extension once, from its newest file wherever it lies: an older
+# package left in Downloads or in an earlier unpacked folder never wins
+# over the one just downloaded (owner, 2026-10-15: „ładuję ją do VSC
+# i mam ciągle 186").
+install_local() {
+  local rc=0 d f name names="" newest ver
+  local dirs
+  dirs="$(local_dirs)"
+
   if [[ -n "${LOCAL_DIR:-}" ]] && ! ls "${LOCAL_DIR}"/*.vsix >/dev/null 2>&1; then
     echo "x No .vsix file in LOCAL_DIR:" >&2
     echo "  $LOCAL_DIR" >&2
     return 1
   fi
-
-  dir="$(find_local_dir)" || {
+  if [[ -z "$dirs" ]]; then
     echo "x No .vsix file found." >&2
     echo "  Looked in: this script's directory, the current directory, Downloads." >&2
     echo "  Name one directly: LOCAL_DIR=/path bash $SELF --local" >&2
     return 1
-  }
+  fi
 
-  echo "Installing .vsix packages from:"
-  echo "  $dir"
-  echo ""
+  while IFS= read -r d; do
+    for f in "$d"/*.vsix; do
+      [[ -f "$f" ]] || continue
+      name="$(basename "$f" .vsix)"
+      case "$names" in *"|$name|"*) ;; *) names="$names|$name|" ;; esac
+    done
+  done <<EOF_DIRS
+$dirs
+EOF_DIRS
 
-  for vsix in "$dir"/*.vsix; do
-    [[ -f "$vsix" ]] || continue
-    name="$(basename "$vsix" .vsix)"
+  local -a list
+  IFS='|' read -r -a list <<< "$names"
+  for name in "${list[@]}"; do
+    [[ -n "$name" ]] || continue
     wanted "$name" "$@" || continue
-
-    echo "> $name"
-    if "$EDITOR_CLI" --install-extension "$vsix" --force; then
-      OK+=("$name")
+    newest=""
+    while IFS= read -r d; do
+      f="$d/$name.vsix"
+      [[ -f "$f" ]] || continue
+      if [[ -z "$newest" || "$f" -nt "$newest" ]]; then newest="$f"; fi
+    done <<EOF_DIRS
+$dirs
+EOF_DIRS
+    ver="$(vsix_version "$newest")"
+    echo "> $name${ver:+ $ver}"
+    echo "  $newest"
+    if "$EDITOR_CLI" --install-extension "$newest" --force; then
+      OK+=("$name${ver:+ $ver}")
     else
       FAILED+=("$name")
     fi
   done
 
   if [[ ${#OK[@]} -eq 0 && ${#FAILED[@]} -eq 0 ]]; then
-    echo "x $dir holds packages, but none match the given names." >&2
+    echo "x Packages found, but none match the given names." >&2
     return 1
   fi
 
