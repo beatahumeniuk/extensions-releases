@@ -49,9 +49,22 @@ jobs:
           for f in *.vsix all-extensions.zip build-and-install.sh skills.zip ea-spec.zip ea-mcp.zip; do
             [[ -e "$f" ]] && cp "$f" staged/
           done
+          # Instalator Spec IDE jest za duzy na repozytorium (limit 100 MB na
+          # plik), wiec lezy w release'ie spec-ide-pilot, gdzie wrzuca go
+          # release.sh z repozytorium spec-ide; tu dolacza do latest-build,
+          # zeby byl obok reszty.
+          spec_ide_title=""
+          if gh release download spec-ide-pilot -R "$GITHUB_REPOSITORY" \
+               -p spec-ide-win32-x64-user-setup.exe -D staged 2>/dev/null; then
+            spec_ide_title="$(gh release view spec-ide-pilot -R "$GITHUB_REPOSITORY" --json name --jq .name)"
+          fi
           built_at="$(TZ=UTC git log -1 --format=%cd --date=format-local:'%Y-%m-%d %H:%M' HEAD) UTC"
           source_note="$(git log -1 --format=%s HEAD)"
           {
+            if [[ -n "$spec_ide_title" ]]; then
+              echo "**$spec_ide_title** dla Windows: [\`spec-ide-win32-x64-user-setup.exe\`](https://github.com/$GITHUB_REPOSITORY/releases/download/$RELEASE_TAG/spec-ide-win32-x64-user-setup.exe)"
+              echo
+            fi
             echo "Automatyczny build wszystkich rozszerzeń ze źródeł, odświeżany po każdej zmianie."
             echo
             echo "**Zbudowano:** $built_at · $source_note"
