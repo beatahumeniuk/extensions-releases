@@ -1,5 +1,5 @@
 jira-tasks|beatahumeniuk.jira-tasks|0.9.4|jira-tasks.vsix
-logic-spec|beatahumeniuk.logic-spec|0.107.4|logic-spec.vsix
+logic-spec|beatahumeniuk.logic-spec|0.107.5|logic-spec.vsix
 spec-skills|beatahumeniuk.spec-skills|0.48.2|spec-skills.vsix
 spec-studio|beatahumeniuk.spec-studio|0.23.2|spec-studio.vsix
 ui-spec|beatahumeniuk.ui-spec|0.40.0|ui-spec.vsix
